@@ -18,8 +18,8 @@ const backendProxy = {
 
 export default defineConfig({
   plugins: [react()],
-  server: { port: 5173, proxy: backendProxy },
-  preview: { port: 5173, proxy: backendProxy },
+  server: { port: 5199, proxy: backendProxy },
+  preview: { port: 5199, proxy: backendProxy },
   test: {
     environment: 'jsdom',
     setupFiles: './src/test-setup.ts',

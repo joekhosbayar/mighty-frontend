@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "bots": "tsx e2e/bots/run-bots.ts",
-    "capture": "tsx scripts/capture-fixtures.ts"
+    "capture": "tsx scripts/capture-fixtures.ts",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "react": "^19.2.7",
@@ -19,6 +20,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
