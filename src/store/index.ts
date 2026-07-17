@@ -149,6 +149,24 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
   })
 }
 
+function defaultStorage(): Deps['storage'] {
+  try {
+    const s = window.localStorage
+    if (s) {
+      s.getItem('mighty.probe')
+      return s
+    }
+  } catch {
+    // Storage disabled (private mode, sandbox) — fall through to memory.
+  }
+  const mem = new Map<string, string>()
+  return {
+    getItem: k => mem.get(k) ?? null,
+    setItem: (k, v) => void mem.set(k, v),
+    removeItem: k => void mem.delete(k),
+  }
+}
+
 let defaultStore: StoreApi<AppState> | null = null
 
 export function appStore(): StoreApi<AppState> {
@@ -158,7 +176,7 @@ export function appStore(): StoreApi<AppState> {
       http,
       makeSocket: (gameId, token, callbacks) =>
         new GameSocket({ gameId, token, callbacks, fetchGame: id => http.getGame(id) }),
-      storage: localStorage,
+      storage: defaultStorage(),
     })
   }
   return defaultStore
