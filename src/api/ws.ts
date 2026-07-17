@@ -56,6 +56,7 @@ export class GameSocket {
     ws.onmessage = ev => {
       const msg = parseServerMessage(String(ev.data))
       if (msg.kind === 'error') callbacks.onError(msg.error)
+      else if (msg.kind === 'event') void this.resync()
       else this.acceptGame(msg.game)
     }
     ws.onclose = () => {

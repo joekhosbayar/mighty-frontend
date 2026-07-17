@@ -110,6 +110,26 @@ describe('GameSocket reconnect and resync', () => {
     expect(callbacks.onGame).toHaveBeenCalledWith(expect.objectContaining({ version: 3 }))
   })
 
+  it('resyncs when a stateless event envelope arrives', async () => {
+    const ws = new FakeWS()
+    const callbacks = { onGame: vi.fn(), onError: vi.fn(), onStatus: vi.fn() }
+    const fetchGame = vi.fn(async () => gameV(4) as never)
+    const socket = new GameSocket({
+      gameId: 'g1', token: 'tok', callbacks, wsFactory: () => ws, fetchGame,
+    })
+    socket.connect()
+    ws.open()
+    await Promise.resolve()
+    await Promise.resolve()
+    fetchGame.mockClear()
+    callbacks.onGame.mockClear()
+    ws.receive({ type: 'player_joined', player: { id: 'u2' }, version: 5 })
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(fetchGame).toHaveBeenCalledWith('g1')
+    expect(callbacks.onGame).toHaveBeenCalledWith(expect.objectContaining({ version: 4 }))
+  })
+
   it('drops a stale resync result that lost the race to a broadcast', async () => {
     const ws = new FakeWS()
     const callbacks = { onGame: vi.fn(), onError: vi.fn(), onStatus: vi.fn() }

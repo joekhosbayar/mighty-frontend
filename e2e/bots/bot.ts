@@ -10,6 +10,7 @@ export interface BotOptions {
   gameId?: string
   opensBidding?: boolean
   onRaw?(raw: string): void
+  onGame?(game: Game): void
 }
 
 export interface BotHandle {
@@ -77,7 +78,26 @@ export async function runBot(opts: BotOptions): Promise<BotHandle> {
     }
   }
 
-  ws.on('open', () => ws.send(JSON.stringify({ type: 'AUTH', token })))
+  const accept = (g: Game) => {
+    if (current && g.version < current.version) return
+    retryOffset = 0
+    current = g
+    opts.onGame?.(g)
+    act(g)
+  }
+
+  const resync = async () => {
+    try {
+      accept(await http.getGame(game.id))
+    } catch {
+      // Transient fetch failure — the next event or envelope recovers state.
+    }
+  }
+
+  ws.on('open', () => {
+    ws.send(JSON.stringify({ type: 'AUTH', token }))
+    void resync()
+  })
   ws.on('message', data => {
     const raw = data.toString()
     opts.onRaw?.(raw)
@@ -91,9 +111,12 @@ export async function runBot(opts: BotOptions): Promise<BotHandle> {
       }
       return
     }
-    retryOffset = 0
-    current = msg.game
-    act(msg.game)
+    if (msg.kind === 'event') {
+      // Stateless envelope (e.g. player_joined) — refetch over REST.
+      void resync()
+      return
+    }
+    accept(msg.game)
   })
   ws.on('error', e => rejectDone(e instanceof Error ? e : new Error(String(e))))
 

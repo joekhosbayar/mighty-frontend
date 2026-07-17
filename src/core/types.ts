@@ -62,12 +62,24 @@ export interface Game {
   updated_at: string
 }
 
-export type ServerMessage = { kind: 'game'; game: Game } | { kind: 'error'; error: string }
+export type ServerMessage =
+  | { kind: 'game'; game: Game }
+  | { kind: 'error'; error: string }
+  | { kind: 'event'; type: string }
 
+// The server sends three shapes: {"type":"ERROR",...}, move envelopes with a
+// full game under "game_state", and stateless envelopes (e.g. player_joined)
+// after which clients must refetch state over REST.
 export function parseServerMessage(raw: string): ServerMessage {
   const data = JSON.parse(raw) as Record<string, unknown>
   if (data.type === 'ERROR') {
     return { kind: 'error', error: typeof data.error === 'string' ? data.error : 'unknown error' }
+  }
+  if (typeof data.type === 'string') {
+    if (data.game_state && typeof data.game_state === 'object') {
+      return { kind: 'game', game: data.game_state as unknown as Game }
+    }
+    return { kind: 'event', type: data.type }
   }
   return { kind: 'game', game: data as unknown as Game }
 }
