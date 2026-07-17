@@ -35,17 +35,20 @@ export class GameSocket {
   private ws: WebSocketLike | null = null
   private lastVersion = 0
   private closed = false
+  private retries = 0
 
   constructor(private readonly opts: GameSocketOptions) {}
 
   connect(): void {
     const { gameId, token, callbacks } = this.opts
-    callbacks.onStatus('connecting')
+    callbacks.onStatus(this.retries === 0 ? 'connecting' : 'reconnecting')
     const ws = (this.opts.wsFactory ?? browserWsFactory)(`/games/${gameId}/ws`)
     this.ws = ws
     ws.onopen = () => {
       ws.send(JSON.stringify({ type: 'AUTH', token }))
       callbacks.onStatus('open')
+      this.retries = 0
+      void this.resync()
     }
     ws.onmessage = ev => {
       const msg = parseServerMessage(String(ev.data))
@@ -53,7 +56,25 @@ export class GameSocket {
       else this.acceptGame(msg.game)
     }
     ws.onclose = () => {
-      callbacks.onStatus('closed')
+      if (this.closed) {
+        callbacks.onStatus('closed')
+        return
+      }
+      const delay = Math.min(1000 * 2 ** this.retries, this.opts.maxBackoffMs ?? 10_000)
+      this.retries += 1
+      callbacks.onStatus('reconnecting')
+      setTimeout(() => {
+        if (!this.closed) this.connect()
+      }, delay)
+    }
+  }
+
+  private async resync(): Promise<void> {
+    if (!this.opts.fetchGame) return
+    try {
+      this.acceptGame(await this.opts.fetchGame(this.opts.gameId))
+    } catch {
+      // A failed resync is safe to ignore: the next broadcast carries full state.
     }
   }
 

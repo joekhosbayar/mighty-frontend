@@ -67,3 +67,63 @@ describe('GameSocket', () => {
     expect(ws.sent.filter(f => JSON.parse(f).type === 'MOVE')).toHaveLength(0)
   })
 })
+
+describe('GameSocket reconnect and resync', () => {
+  it('reconnects with backoff after an unexpected close', () => {
+    vi.useFakeTimers()
+    const sockets: FakeWS[] = []
+    const callbacks = { onGame: vi.fn(), onError: vi.fn(), onStatus: vi.fn() }
+    const socket = new GameSocket({
+      gameId: 'g1', token: 'tok', callbacks,
+      wsFactory: () => { const w = new FakeWS(); sockets.push(w); return w },
+    })
+    socket.connect()
+    sockets[0].open()
+    sockets[0].onclose?.() // dropped, not user-initiated
+    expect(callbacks.onStatus).toHaveBeenLastCalledWith('reconnecting')
+    expect(sockets).toHaveLength(1)
+    vi.advanceTimersByTime(1000)
+    expect(sockets).toHaveLength(2)
+    sockets[1].onclose?.()
+    vi.advanceTimersByTime(1999)
+    expect(sockets).toHaveLength(2)
+    vi.advanceTimersByTime(1)
+    expect(sockets).toHaveLength(3)
+    socket.close()
+    vi.advanceTimersByTime(60_000)
+    expect(sockets).toHaveLength(3)
+    vi.useRealTimers()
+  })
+
+  it('fetches the current game state on open', async () => {
+    const ws = new FakeWS()
+    const callbacks = { onGame: vi.fn(), onError: vi.fn(), onStatus: vi.fn() }
+    const fetchGame = vi.fn(async () => gameV(3) as never)
+    const socket = new GameSocket({
+      gameId: 'g1', token: 'tok', callbacks, wsFactory: () => ws, fetchGame,
+    })
+    socket.connect()
+    ws.open()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(fetchGame).toHaveBeenCalledWith('g1')
+    expect(callbacks.onGame).toHaveBeenCalledWith(expect.objectContaining({ version: 3 }))
+  })
+
+  it('drops a stale resync result that lost the race to a broadcast', async () => {
+    const ws = new FakeWS()
+    const callbacks = { onGame: vi.fn(), onError: vi.fn(), onStatus: vi.fn() }
+    const socket = new GameSocket({
+      gameId: 'g1', token: 'tok', callbacks,
+      wsFactory: () => ws,
+      fetchGame: async () => gameV(3) as never,
+    })
+    socket.connect()
+    ws.receive(gameV(7)) // broadcast arrives before...
+    ws.open()
+    await Promise.resolve() // ...the resync fetch resolves stale
+    await Promise.resolve()
+    expect(callbacks.onGame).toHaveBeenCalledTimes(1)
+    expect(callbacks.onGame).toHaveBeenCalledWith(expect.objectContaining({ version: 7 }))
+  })
+})
