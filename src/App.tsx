@@ -1,4 +1,5 @@
 import { AuthScreen } from './components/AuthScreen'
+import { GameScreen } from './components/GameScreen'
 import { LobbyScreen } from './components/LobbyScreen'
 import { useApp } from './store'
 
@@ -29,7 +30,7 @@ export function App() {
       />
     )
   }
-  return <p>Table</p>
+  return <GameScreen />
 }
 
 export default App

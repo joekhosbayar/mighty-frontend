@@ -37,10 +37,13 @@ describe('createHttp', () => {
 
   it('throws ApiError with status and server text on failure', async () => {
     const http = createHttp(fakeFetch(401, 'invalid credentials\n'))
-    const err = await http.login('a', 'b').catch(e => e as ApiError)
+    const err = await http.login('a', 'b').then(
+      () => null,
+      e => e as ApiError,
+    )
     expect(err).toBeInstanceOf(ApiError)
-    expect(err.status).toBe(401)
-    expect(err.message).toBe('invalid credentials')
+    expect(err?.status).toBe(401)
+    expect(err?.message).toBe('invalid credentials')
   })
 
   it('prefixes an absolute base when given', async () => {

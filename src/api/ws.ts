@@ -36,8 +36,11 @@ export class GameSocket {
   private lastVersion = 0
   private closed = false
   private retries = 0
+  private readonly opts: GameSocketOptions
 
-  constructor(private readonly opts: GameSocketOptions) {}
+  constructor(opts: GameSocketOptions) {
+    this.opts = opts
+  }
 
   connect(): void {
     const { gameId, token, callbacks } = this.opts
