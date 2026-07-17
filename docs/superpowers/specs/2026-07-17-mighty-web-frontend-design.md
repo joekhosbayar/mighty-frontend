@@ -71,7 +71,7 @@ fixtures/        # Game JSON captured from real server broadcasts
 Minimal router with three screens:
 
 1. **Auth** — login/signup; JWT kept in memory and `localStorage`.
-2. **Lobby** — lists `GET /games?status=waiting` (polled every few seconds), Create Game, Join; navigates to the table on success.
+2. **Lobby** — lists `GET /games?status=waiting` (polled every 3 seconds while the screen is visible), Create Game, Join; navigates to the table on success.
 3. **Game Table** — single screen switching on `Game.status`:
    - `bidding`: bid panel (suit, points 3–10, no-trump toggle, pass), bid history.
    - `exchanging` (declarer only; others see a waiting state): hand + kitty, select exactly 3 discards.
