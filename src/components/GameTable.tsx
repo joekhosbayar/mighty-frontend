@@ -17,6 +17,7 @@ export interface GameTableProps {
   onPass(): void
   onDiscard(cards: Card[]): void
   onCallPartner(card: Card): void
+  onNoFriend(): void
   onPlayCard(card: Card, callJoker: boolean, calledSuit?: Suit): void
   onLeave(): void
 }
@@ -43,7 +44,7 @@ export function GameTable(props: GameTableProps) {
       {view.phase === 'waiting' && <p>{`Waiting for players (${seated}/5)…`}</p>}
       {view.phase === 'bidding' && <BidPanel view={view} onBid={props.onBid} onPass={props.onPass} />}
       {view.phase === 'exchanging' && <ExchangePanel view={view} onDiscard={props.onDiscard} />}
-      {view.phase === 'calling' && <FriendCallPanel view={view} onCallPartner={props.onCallPartner} />}
+      {view.phase === 'calling' && <FriendCallPanel view={view} onCallPartner={props.onCallPartner} onNoFriend={props.onNoFriend} />}
       {view.phase === 'playing' && <PlayArea view={view} onPlayCard={props.onPlayCard} />}
       {view.phase === 'finished' && <ScoreBoard view={view} />}
 

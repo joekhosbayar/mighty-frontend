@@ -1,5 +1,5 @@
 import { tableView } from '../core/view'
-import type { PlayCardPayload } from '../core/types'
+import type { PlayCardPayload, CallPartnerPayload } from '../core/types'
 import { useApp } from '../store'
 import { GameTable } from './GameTable'
 
@@ -21,7 +21,8 @@ export function GameScreen() {
       onBid={b => sendMove('bid', b)}
       onPass={() => sendMove('pass', null)}
       onDiscard={cards => sendMove('discard', cards)}
-      onCallPartner={card => sendMove('call_partner', card)}
+      onCallPartner={card => sendMove('call_partner', { card } satisfies CallPartnerPayload)}
+      onNoFriend={() => sendMove('call_partner', { no_friend: true } satisfies CallPartnerPayload)}
       onPlayCard={(card, callJoker, calledSuit) =>
         sendMove('play_card', {
           card,

@@ -11,15 +11,16 @@ export function ScoreBoard({ view }: { view: TableView }) {
       )}
       <table>
         <thead>
-          <tr><th>Player</th><th>Card points</th><th>Role</th></tr>
+          <tr><th>Player</th><th>Round score</th><th>Card points</th><th>Role</th></tr>
         </thead>
         <tbody>
           {view.scores.map(row => {
             const seat = view.seats.find(s => s.name === row.name)
             const role = seat?.isDeclarer ? 'declarer' : seat?.isPartner ? 'partner' : ''
             return (
-              <tr key={row.playerId}>
+              <tr key={row.playerId} data-testid={`score-row-${row.playerId}`}>
                 <td>{row.name}</td>
+                <td>{row.roundScore}</td>
                 <td>{row.cardPoints}</td>
                 <td>{role}</td>
               </tr>
