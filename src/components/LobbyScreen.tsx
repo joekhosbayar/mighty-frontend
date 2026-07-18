@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import type { Game } from '../core/types'
+import { getTableName } from '../core/names'
 
 export interface LobbyScreenProps {
   games: Game[]
@@ -45,7 +46,7 @@ export function LobbyScreen({ games, username, onCreate, onJoin, onRefresh, onLo
             {games.map(g => (
               <li key={g.id} className="panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: 0 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>Table {g.id.substring(0, 8)}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>{getTableName(g.id)}</span>
                   <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
                     Created {new Date(g.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </span>

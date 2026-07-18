@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { LobbyScreen } from './LobbyScreen'
 import { baseGame, player } from '../core/testing/builders'
+import { getTableName } from '../core/names'
 
 describe('LobbyScreen', () => {
   const games = [
@@ -15,7 +16,7 @@ describe('LobbyScreen', () => {
       <LobbyScreen games={games} username="alice" onCreate={vi.fn()} onJoin={onJoin}
         onRefresh={vi.fn()} onLogout={vi.fn()} />,
     )
-    expect(screen.getByText(/Table g1/)).toBeInTheDocument()
+    expect(screen.getByText(getTableName('g1'))).toBeInTheDocument()
     expect(screen.getByText(/2\/5 seated/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Join Table' }))
     expect(onJoin).toHaveBeenCalledWith('g1')
