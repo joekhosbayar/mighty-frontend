@@ -15,11 +15,7 @@ export function isLegalBid(bid: BidInput, currentBid: Bid | null): boolean {
     return false
   }
   if (!currentBid) return true
-  if (bid.points < currentBid.points) return false
-  if (bid.points === currentBid.points) {
-    if (currentBid.is_no_trump) return false
-    if (!bid.is_no_trump && SUIT_RANK[bid.suit] <= SUIT_RANK[currentBid.suit]) return false
-  }
+  if (bid.points <= currentBid.points) return false
   return true
 }
 
