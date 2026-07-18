@@ -37,4 +37,19 @@ describe('captured full-game replay (real server contract)', () => {
       expect(states[i].version).toBeGreaterThanOrEqual(states[i - 1].version)
     }
   })
+
+  // The capture may legitimately contain zero reveals (called card left in
+  // the kitty); the invariant is asserted for every state that has one.
+  it('reveals the partner as the seat that played the called card', () => {
+    for (const g of states) {
+      if (g.partner_seat >= 0 && g.partner_card) {
+        const playedBy = (g.tricks ?? [])
+          .flatMap(t => t.cards)
+          .find(
+            pc => pc.card.suit === g.partner_card!.suit && pc.card.rank === g.partner_card!.rank,
+          )?.seat
+        expect(playedBy).toBe(g.partner_seat)
+      }
+    }
+  })
 })

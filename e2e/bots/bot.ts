@@ -69,12 +69,18 @@ export async function runBot(opts: BotOptions): Promise<BotHandle> {
       send('discard', (me.hand ?? []).slice(0, 3), g.version)
     } else if (g.status === 'calling' && g.declarer === me.seat) {
       lastActed = g.version
-      send('call_partner', { suit: 'hearts', rank: 'A' }, g.version)
+      send('call_partner', { card: { suit: 'hearts', rank: 'A' } }, g.version)
     } else if (g.status === 'playing' && g.current_turn === me.seat) {
       lastActed = g.version
       const plays = legalPlays(g, me.seat)
       const card = plays[Math.min(retryOffset, Math.max(plays.length - 1, 0))]
-      if (card) send('play_card', { card, call_joker: false }, g.version)
+      if (card) {
+        const tricks = g.tricks ?? []
+        const leading = (tricks[tricks.length - 1]?.cards.length ?? -1) === 0
+        const payload: Record<string, unknown> = { card, call_joker: false }
+        if (leading && card.rank === 'Joker') payload.called_suit = 'hearts'
+        send('play_card', payload, g.version)
+      }
     }
   }
 
