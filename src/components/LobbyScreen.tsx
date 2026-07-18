@@ -18,26 +18,40 @@ export function LobbyScreen({ games, username, onCreate, onJoin, onRefresh, onLo
   }, [onRefresh])
 
   return (
-    <main className="lobby">
-      <header>
-        <h1>Lobby</h1>
-        <span>{username}</span>
-        <button onClick={onLogout}>Log out</button>
+    <main className="lobby" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <header className="table-header">
+        <div className="table-header-info">
+          <span className="phase-title" style={{ margin: 0 }}>Mighty</span>
+          <span className="phase-tag">Lobby</span>
+        </div>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <span style={{ color: 'var(--color-text-secondary)' }}>{username}</span>
+          <button onClick={onLogout}>Log out</button>
+        </div>
       </header>
-      <button onClick={onCreate}>Create game</button>
-      {games.length === 0 ? (
-        <p>No games waiting — create one.</p>
-      ) : (
-        <ul>
-          {games.map(g => (
-            <li key={g.id}>
-              <span>{g.id}</span>
-              <span>{`${g.players.filter(Boolean).length}/5`}</span>
-              <button onClick={() => onJoin(g.id)}>Join</button>
-            </li>
-          ))}
-        </ul>
-      )}
+
+      <div className="table-content" style={{ maxWidth: '800px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <h2 style={{ margin: 0 }}>Open Tables</h2>
+          <button onClick={onCreate} style={{ background: 'var(--color-accent)', color: 'var(--color-ink)', fontWeight: 'bold' }}>Create Table</button>
+        </div>
+        
+        {games.length === 0 ? (
+          <div className="panel" style={{ textAlign: 'center', color: 'var(--color-text-secondary)', padding: '3rem 1rem' }}>
+            No tables waiting — create one to start playing.
+          </div>
+        ) : (
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {games.map(g => (
+              <li key={g.id} className="panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: 0 }}>
+                <span style={{ fontFamily: 'var(--font-mono)' }}>Table {g.id.substring(0, 8)}</span>
+                <span style={{ color: 'var(--color-accent)' }}>{`${g.players.filter(Boolean).length}/5 seated`}</span>
+                <button onClick={() => onJoin(g.id)}>Join Table</button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </main>
   )
 }

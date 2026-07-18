@@ -3,6 +3,7 @@ import type { Card, Suit } from '../core/types'
 import type { TableView } from '../core/view'
 import { cardLabel, sameCard } from '../core/cards'
 import { Hand } from './Hand'
+import { PhysicalCard } from './PhysicalCard'
 
 export interface PlayAreaProps {
   view: TableView
@@ -37,43 +38,63 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
     setPendingJoker(null)
   }
 
+  const mySeatIdx = view.seats.findIndex(s => s.isMe)
+  
+  const POSITIONS = ['seat-pos-bottom', 'seat-pos-left', 'seat-pos-top-left', 'seat-pos-top-right', 'seat-pos-right']
+
   return (
-    <section className="play-area">
-      <ul className="seats">
-        {view.seats.map(s => {
+    <div className="play-area">
+      <div className="seats-container">
+        {view.seats.map((s, idx) => {
+          const relIdx = mySeatIdx >= 0 ? (idx - mySeatIdx + 5) % 5 : idx
           const trickCard = played.get(s.seat)
+          const isTurn = s.isTurn ? 'is-turn' : ''
           return (
-            <li key={s.seat} data-testid={`seat-${s.seat}`} className={s.isTurn ? 'turn' : ''}>
-              <span>
+            <div key={s.seat} data-testid={`seat-${s.seat}`} className={`seat-wrapper ${POSITIONS[relIdx]}`}>
+              <div className={`seat-nameplate ${isTurn}`}>
                 {s.name ?? 'empty'}
-                {s.isMe ? ' (you)' : ''}
-                {s.isDeclarer ? ' — declarer' : ''}
-                {s.isPartner ? ' — partner' : ''}
-              </span>
-              <span data-testid={`trick-card-${s.seat}`}>
-                {trickCard ? cardLabel(trickCard) : ''}
-              </span>
-            </li>
+              </div>
+              {(s.isDeclarer || s.isPartner) && (
+                <div className="seat-role">{s.isDeclarer ? 'Declarer' : 'Partner'}</div>
+              )}
+            </div>
           )
         })}
-      </ul>
+
+        <div className="trick-area">
+          {view.seats.map((s) => {
+            const trickCard = played.get(s.seat)
+            return trickCard ? (
+              <div key={`trick-${s.seat}`} data-testid={`trick-card-${s.seat}`}>
+                <PhysicalCard card={trickCard} />
+              </div>
+            ) : null
+          })}
+        </div>
+      </div>
+
       <Hand cards={view.hand} mode="play" onCard={handleCard} />
+      
       {pendingCaller && (
         <div role="dialog" aria-label="Call the Joker?">
           <p>Lead the Joker Caller — force the Joker out?</p>
-          <button onClick={() => resolveCall(true)}>Call the Joker</button>
-          <button onClick={() => resolveCall(false)}>Play without calling</button>
+          <div className="dialog-actions">
+            <button onClick={() => resolveCall(true)}>Call the Joker</button>
+            <button onClick={() => resolveCall(false)}>Play without calling</button>
+          </div>
         </div>
       )}
       {pendingJoker && (
         <div role="dialog" aria-label="Lead the Joker">
           <p>Call a suit for the trick:</p>
-          {LEAD_SUITS.map(({ suit, label }) => (
-            <button key={suit} onClick={() => resolveJokerLead(suit)}>{label}</button>
-          ))}
-          <button onClick={() => setPendingJoker(null)}>Cancel</button>
+          <div className="dialog-actions">
+            {LEAD_SUITS.map(({ suit, label }) => (
+              <button key={suit} onClick={() => resolveJokerLead(suit)}>{label}</button>
+            ))}
+          </div>
+          <button onClick={() => setPendingJoker(null)} style={{marginTop: '1rem', background: 'transparent'}}>Cancel</button>
         </div>
       )}
-    </section>
+    </div>
   )
 }

@@ -41,6 +41,6 @@ describe('ExchangePanel', () => {
     await userEvent.click(screen.getByTestId('hand-card-clubs-2'))
     expect(screen.getByTestId('hand-card-clubs-2')).toHaveAttribute('aria-pressed', 'true')
     await userEvent.click(screen.getByTestId('hand-card-clubs-2'))
-    expect(screen.getByTestId('hand-card-clubs-2')).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByTestId('hand-card-clubs-2')).not.toHaveAttribute('aria-pressed')
   })
 })

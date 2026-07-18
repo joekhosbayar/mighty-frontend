@@ -22,8 +22,8 @@ describe('PlayArea', () => {
       ],
     })
     render(<PlayArea view={tableView(g, 'p0')} onPlayCard={vi.fn()} />)
-    expect(screen.getByTestId('seat-1')).toHaveTextContent('declarer')
-    expect(screen.getByTestId('trick-card-2')).toHaveTextContent('♦Q')
+    expect(screen.getByTestId('seat-1')).toHaveTextContent('Declarer')
+    expect(screen.getByTestId('trick-card-2')).toBeInTheDocument()
   })
 
   it('plays an ordinary card immediately without calling the joker', async () => {

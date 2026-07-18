@@ -12,7 +12,7 @@ describe('BidPanel', () => {
   it('sends a suit bid with the chosen points', async () => {
     const onBid = vi.fn()
     render(<BidPanel view={biddingView()} onBid={onBid} onPass={vi.fn()} />)
-    await userEvent.selectOptions(screen.getByLabelText('Tricks'), '5')
+    await userEvent.selectOptions(screen.getByLabelText('Tricks:'), '5')
     await userEvent.click(screen.getByRole('button', { name: '♠ 5' }))
     expect(onBid).toHaveBeenCalledWith({ points: 5, suit: 'spades', is_no_trump: false })
   })

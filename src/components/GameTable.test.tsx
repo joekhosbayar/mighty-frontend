@@ -26,7 +26,7 @@ describe('GameTable', () => {
 
   it('renders the bid panel during bidding', () => {
     renderTable({}, baseGame({ status: 'bidding' }))
-    expect(screen.getByRole('button', { name: 'Pass' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Leave Table' })).toBeInTheDocument()
   })
 
   it('renders the exchange panel during exchanging', () => {

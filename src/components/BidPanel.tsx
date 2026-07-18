@@ -22,31 +22,37 @@ export function BidPanel({ view, onBid, onPass }: BidPanelProps) {
   const candidate = (suit: Suit): BidInput => ({ points, suit, is_no_trump: suit === 'none' })
 
   return (
-    <section className="bid-panel">
-      <h2>Bidding</h2>
-      <ol data-testid="bid-history">
+    <section className="bid-panel panel" style={{ maxWidth: '600px', margin: '0 auto' }}>
+      <h2 style={{ fontSize: '1.5rem', color: 'var(--color-accent)' }}>Bidding</h2>
+      <ol data-testid="bid-history" style={{ listStyle: 'none', padding: 0, margin: '1rem 0', fontFamily: 'var(--font-mono)' }}>
         {view.bids.map((b, i) => (
           <li key={i}>{`${b.player_id}: ${b.points} ${b.is_no_trump ? 'no-trump' : b.suit}`}</li>
         ))}
       </ol>
-      <label>
-        Tricks
-        <select value={points} onChange={e => setPoints(Number(e.target.value))}>
-          {[3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-            <option key={n} value={n}>{n}</option>
+      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '1rem' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontFamily: 'var(--font-mono)' }}>
+          Tricks:
+          <select value={points} onChange={e => setPoints(Number(e.target.value))}>
+            {[3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+        </label>
+        
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {SUIT_OPTIONS.map(({ suit, label }) => (
+            <button
+              key={suit}
+              disabled={!view.isMyTurn || !isLegalBid(candidate(suit), view.currentBid)}
+              onClick={() => onBid(candidate(suit))}
+              style={{ minWidth: '4rem' }}
+            >
+              <span style={suit === 'hearts' || suit === 'diamonds' ? { color: 'var(--color-crimson)' } : undefined}>{label}</span> {points}
+            </button>
           ))}
-        </select>
-      </label>
-      {SUIT_OPTIONS.map(({ suit, label }) => (
-        <button
-          key={suit}
-          disabled={!view.isMyTurn || !isLegalBid(candidate(suit), view.currentBid)}
-          onClick={() => onBid(candidate(suit))}
-        >
-          {`${label} ${points}`}
-        </button>
-      ))}
-      <button disabled={!view.isMyTurn} onClick={onPass}>Pass</button>
+          <button disabled={!view.isMyTurn} onClick={onPass} style={{ background: 'transparent' }}>Pass</button>
+        </div>
+      </div>
     </section>
   )
 }

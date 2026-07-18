@@ -23,7 +23,7 @@ describe('Hand', () => {
     render(<Hand cards={cards} mode="select" selected={[c('clubs', '5')]} onCard={onCard} />)
     expect(screen.getByTestId('hand-card-clubs-5')).toBeEnabled()
     expect(screen.getByTestId('hand-card-clubs-5')).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByTestId('hand-card-spades-A')).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByTestId('hand-card-spades-A')).not.toHaveAttribute('aria-pressed')
     await userEvent.click(screen.getByTestId('hand-card-clubs-5'))
     expect(onCard).toHaveBeenCalledWith(c('clubs', '5'))
   })

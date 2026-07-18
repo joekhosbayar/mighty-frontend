@@ -14,7 +14,7 @@ export function ExchangePanel({ view, onDiscard }: ExchangePanelProps) {
   const [selected, setSelected] = useState<Card[]>([])
 
   if (!view.amDeclarer) {
-    return <p>Waiting for the declarer to exchange with the kitty…</p>
+    return <p className="panel" style={{ textAlign: 'center', margin: '2rem auto', maxWidth: '400px', color: 'var(--color-text-secondary)' }}>Waiting for the declarer to exchange with the kitty…</p>
   }
 
   const toggle = (card: Card) =>
@@ -26,15 +26,18 @@ export function ExchangePanel({ view, onDiscard }: ExchangePanelProps) {
   const handCards = view.hand.map(h => h.card)
 
   return (
-    <section className="exchange">
-      <h2>Discard exactly 3 cards</h2>
+    <section className="exchange panel" style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+      <h2 style={{ fontSize: '1.5rem', color: 'var(--color-accent)' }}>Discard exactly 3 cards</h2>
       <Hand cards={view.hand} mode="select" selected={selected} onCard={toggle} />
-      <button
-        disabled={!isValidDiscard(handCards, selected)}
-        onClick={() => onDiscard(selected)}
-      >
-        {`Discard ${selected.length}/3`}
-      </button>
+      <div style={{ marginTop: '1.5rem' }}>
+        <button
+          disabled={!isValidDiscard(handCards, selected)}
+          onClick={() => onDiscard(selected)}
+          style={{ background: 'var(--color-accent)', color: 'var(--color-ink)', fontWeight: 'bold' }}
+        >
+          {`Discard ${selected.length}/3`}
+        </button>
+      </div>
     </section>
   )
 }

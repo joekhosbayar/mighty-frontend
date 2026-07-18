@@ -17,7 +17,7 @@ describe('FriendCallPanel', () => {
   it('calls the default hearts ace', async () => {
     const onCallPartner = vi.fn()
     render(<FriendCallPanel view={callingView()} onCallPartner={onCallPartner} onNoFriend={vi.fn()} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Call' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Call A of hearts' }))
     expect(onCallPartner).toHaveBeenCalledWith({ suit: 'hearts', rank: 'A' })
   })
 
@@ -26,7 +26,7 @@ describe('FriendCallPanel', () => {
     render(<FriendCallPanel view={callingView()} onCallPartner={onCallPartner} onNoFriend={vi.fn()} />)
     await userEvent.selectOptions(screen.getByLabelText('Suit'), 'diamonds')
     await userEvent.selectOptions(screen.getByLabelText('Rank'), 'K')
-    await userEvent.click(screen.getByRole('button', { name: 'Call' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Call K of diamonds' }))
     expect(onCallPartner).toHaveBeenCalledWith({ suit: 'diamonds', rank: 'K' })
   })
 

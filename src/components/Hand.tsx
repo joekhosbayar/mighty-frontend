@@ -1,6 +1,7 @@
 import type { Card } from '../core/types'
 import type { HandCard } from '../core/view'
-import { cardLabel, sameCard } from '../core/cards'
+import { sameCard } from '../core/cards'
+import { PhysicalCard } from './PhysicalCard'
 
 export interface HandProps {
   cards: HandCard[]
@@ -12,18 +13,23 @@ export interface HandProps {
 export function Hand({ cards, mode, selected = [], onCard }: HandProps) {
   const isSelected = (card: Card) => selected.some(s => sameCard(s, card))
   return (
-    <div className="hand" data-testid="hand">
-      {cards.map(({ card, playable }) => (
-        <button
-          key={`${card.suit}-${card.rank}`}
-          data-testid={`hand-card-${card.suit}-${card.rank}`}
-          disabled={mode === 'play' && !playable}
-          aria-pressed={mode === 'select' ? isSelected(card) : undefined}
-          onClick={() => onCard(card)}
-        >
-          {cardLabel(card)}
-        </button>
-      ))}
+    <div className="hand-container" data-testid="hand">
+      {cards.map(({ card, playable }) => {
+        const isSel = mode === 'select' && isSelected(card)
+        return (
+          <button
+            key={`${card.suit}-${card.rank}`}
+            className="hand-card-btn"
+            data-testid={`hand-card-${card.suit}-${card.rank}`}
+            disabled={mode === 'play' && !playable}
+            aria-pressed={isSel ? 'true' : undefined}
+            onClick={() => onCard(card)}
+            style={isSel ? { transform: 'translateY(-15px)' } : undefined}
+          >
+            <PhysicalCard card={card} />
+          </button>
+        )
+      })}
     </div>
   )
 }

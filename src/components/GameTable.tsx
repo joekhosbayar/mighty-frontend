@@ -27,19 +27,24 @@ export function GameTable(props: GameTableProps) {
   const seated = view.seats.filter(s => !s.isEmpty).length
 
   return (
-    <main className="table">
-      <header>
-        <span data-testid="game-id">{view.gameId}</span>
-        <span data-testid="phase">{view.phase}</span>
-        {view.contract && (
-          <span>
-            {`Contract ${view.contract.points} ${view.contract.is_no_trump ? 'no-trump' : view.contract.suit}`}
-          </span>
-        )}
-        <button onClick={props.onLeave}>Leave</button>
+    <main className="table" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <header className="table-header">
+        <div className="table-header-info">
+          <span className="phase-title" style={{ margin: 0 }}>Mighty</span>
+          <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }} data-testid="game-id">Table {view.gameId.substring(0, 8)}</span>
+          <span className="phase-tag" data-testid="phase">{view.phase}</span>
+          {view.contract && (
+            <span style={{ color: 'var(--color-accent)' }}>
+              {`Contract ${view.contract.points} ${view.contract.is_no_trump ? 'no-trump' : view.contract.suit}`}
+            </span>
+          )}
+        </div>
+        <button onClick={props.onLeave}>Leave Table</button>
       </header>
-      {connection !== 'open' && <p role="status">Reconnecting…</p>}
-      {error && <p role="alert">{error}</p>}
+
+      <div className="table-content">
+        {connection !== 'open' && <p role="status">Reconnecting…</p>}
+        {error && <p role="alert">{error}</p>}
 
       {view.phase === 'waiting' && <p>{`Waiting for players (${seated}/5)…`}</p>}
       {view.phase === 'bidding' && <BidPanel view={view} onBid={props.onBid} onPass={props.onPass} />}
@@ -49,8 +54,9 @@ export function GameTable(props: GameTableProps) {
       {view.phase === 'finished' && <ScoreBoard view={view} />}
 
       {(view.phase === 'bidding' || view.phase === 'calling') && view.hand.length > 0 && (
-        <Hand cards={view.hand} mode="play" onCard={() => undefined} />
-      )}
+          <Hand cards={view.hand} mode="play" onCard={() => undefined} />
+        )}
+      </div>
     </main>
   )
 }

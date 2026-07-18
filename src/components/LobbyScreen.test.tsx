@@ -15,9 +15,9 @@ describe('LobbyScreen', () => {
       <LobbyScreen games={games} username="alice" onCreate={vi.fn()} onJoin={onJoin}
         onRefresh={vi.fn()} onLogout={vi.fn()} />,
     )
-    expect(screen.getByText('g1')).toBeInTheDocument()
-    expect(screen.getByText('2/5')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Join' }))
+    expect(screen.getByText(/Table g1/)).toBeInTheDocument()
+    expect(screen.getByText(/2\/5 seated/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Join Table' }))
     expect(onJoin).toHaveBeenCalledWith('g1')
   })
 
@@ -48,7 +48,7 @@ describe('LobbyScreen', () => {
       <LobbyScreen games={[]} username="alice" onCreate={onCreate} onJoin={vi.fn()}
         onRefresh={vi.fn()} onLogout={vi.fn()} />,
     )
-    await userEvent.click(screen.getByRole('button', { name: 'Create game' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Create Table' }))
     expect(onCreate).toHaveBeenCalled()
   })
 })
