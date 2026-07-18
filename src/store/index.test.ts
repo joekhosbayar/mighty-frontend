@@ -107,3 +107,58 @@ describe('app store', () => {
     expect(store.getState().token).toBeNull()
   })
 })
+
+describe('busy retry', () => {
+  it('silently resends the last move once after 300ms on game busy', async () => {
+    vi.useFakeTimers()
+    try {
+      const { deps, sockets } = makeDeps()
+      const store = createAppStore(deps)
+      await store.getState().login('alice', 'pw')
+      await store.getState().joinGame('gA')
+      store.getState().sendMove('pass', null)
+      sockets[0].cb.onError('game busy')
+      expect(store.getState().lastError).toBeNull()
+      expect(sockets[0].socket.sendMove).toHaveBeenCalledTimes(1)
+      vi.advanceTimersByTime(300)
+      expect(sockets[0].socket.sendMove).toHaveBeenCalledTimes(2)
+      expect(sockets[0].socket.sendMove).toHaveBeenLastCalledWith('pass', null)
+      // Second busy on the retry surfaces.
+      sockets[0].cb.onError('game busy')
+      expect(store.getState().lastError).toBe('game busy')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('surfaces other errors immediately without retrying', async () => {
+    const { deps, sockets } = makeDeps()
+    const store = createAppStore(deps)
+    await store.getState().login('alice', 'pw')
+    await store.getState().joinGame('gA')
+    store.getState().sendMove('pass', null)
+    sockets[0].cb.onError('not your turn')
+    expect(store.getState().lastError).toBe('not your turn')
+    expect(sockets[0].socket.sendMove).toHaveBeenCalledTimes(1)
+  })
+
+  it('a fresh move re-arms the single retry', async () => {
+    vi.useFakeTimers()
+    try {
+      const { deps, sockets } = makeDeps()
+      const store = createAppStore(deps)
+      await store.getState().login('alice', 'pw')
+      await store.getState().joinGame('gA')
+      store.getState().sendMove('pass', null)
+      sockets[0].cb.onError('game busy')
+      vi.advanceTimersByTime(300)
+      store.getState().sendMove('bid', { points: 3, suit: 'clubs', is_no_trump: false })
+      sockets[0].cb.onError('game busy')
+      expect(store.getState().lastError).toBeNull()
+      vi.advanceTimersByTime(300)
+      expect(sockets[0].socket.sendMove).toHaveBeenCalledTimes(4)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
