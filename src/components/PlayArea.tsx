@@ -1,26 +1,40 @@
 import { useState } from 'react'
-import type { Card } from '../core/types'
+import type { Card, Suit } from '../core/types'
 import type { TableView } from '../core/view'
 import { cardLabel, sameCard } from '../core/cards'
 import { Hand } from './Hand'
 
 export interface PlayAreaProps {
   view: TableView
-  onPlayCard(card: Card, callJoker: boolean): void
+  onPlayCard(card: Card, callJoker: boolean, calledSuit?: Suit): void
 }
+
+const LEAD_SUITS: { suit: Suit; label: string }[] = [
+  { suit: 'clubs', label: '♣' },
+  { suit: 'diamonds', label: '♦' },
+  { suit: 'hearts', label: '♥' },
+  { suit: 'spades', label: '♠' },
+]
 
 export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
   const [pendingCaller, setPendingCaller] = useState<Card | null>(null)
+  const [pendingJoker, setPendingJoker] = useState<Card | null>(null)
   const played = new Map(view.currentTrick.map(pc => [pc.seat, pc.card]))
 
   const handleCard = (card: Card) => {
-    if (view.jokerCallCard && sameCard(card, view.jokerCallCard)) setPendingCaller(card)
+    if (view.jokerLeadCard && sameCard(card, view.jokerLeadCard)) setPendingJoker(card)
+    else if (view.jokerCallCard && sameCard(card, view.jokerCallCard)) setPendingCaller(card)
     else onPlayCard(card, false)
   }
 
   const resolveCall = (callJoker: boolean) => {
     if (pendingCaller) onPlayCard(pendingCaller, callJoker)
     setPendingCaller(null)
+  }
+
+  const resolveJokerLead = (suit: Suit) => {
+    if (pendingJoker) onPlayCard(pendingJoker, false, suit)
+    setPendingJoker(null)
   }
 
   return (
@@ -49,6 +63,15 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
           <p>Lead the Joker Caller — force the Joker out?</p>
           <button onClick={() => resolveCall(true)}>Call the Joker</button>
           <button onClick={() => resolveCall(false)}>Play without calling</button>
+        </div>
+      )}
+      {pendingJoker && (
+        <div role="dialog" aria-label="Lead the Joker">
+          <p>Call a suit for the trick:</p>
+          {LEAD_SUITS.map(({ suit, label }) => (
+            <button key={suit} onClick={() => resolveJokerLead(suit)}>{label}</button>
+          ))}
+          <button onClick={() => setPendingJoker(null)}>Cancel</button>
         </div>
       )}
     </section>

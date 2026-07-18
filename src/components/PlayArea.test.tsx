@@ -52,3 +52,47 @@ describe('PlayArea', () => {
     expect(onPlayCard).toHaveBeenCalledWith(c('clubs', '3'), false)
   })
 })
+
+describe('joker lead', () => {
+  const joker = c('none', 'Joker')
+  const jokerLeadGame = () =>
+    playingGame([joker, c('diamonds', '2')])
+
+  it('opens the suit dialog instead of playing immediately', async () => {
+    const onPlayCard = vi.fn()
+    render(<PlayArea view={tableView(jokerLeadGame(), 'p0')} onPlayCard={onPlayCard} />)
+    await userEvent.click(screen.getByTestId('hand-card-none-Joker'))
+    expect(onPlayCard).not.toHaveBeenCalled()
+    expect(screen.getByRole('dialog', { name: 'Lead the Joker' })).toBeInTheDocument()
+  })
+
+  it('plays the joker with the chosen suit', async () => {
+    const onPlayCard = vi.fn()
+    render(<PlayArea view={tableView(jokerLeadGame(), 'p0')} onPlayCard={onPlayCard} />)
+    await userEvent.click(screen.getByTestId('hand-card-none-Joker'))
+    await userEvent.click(screen.getByRole('button', { name: '♥' }))
+    expect(onPlayCard).toHaveBeenCalledWith(joker, false, 'hearts')
+  })
+
+  it('cancel closes the dialog without playing', async () => {
+    const onPlayCard = vi.fn()
+    render(<PlayArea view={tableView(jokerLeadGame(), 'p0')} onPlayCard={onPlayCard} />)
+    await userEvent.click(screen.getByTestId('hand-card-none-Joker'))
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onPlayCard).not.toHaveBeenCalled()
+    expect(screen.queryByRole('dialog', { name: 'Lead the Joker' })).not.toBeInTheDocument()
+  })
+
+  it('plays the joker immediately when following (no dialog)', async () => {
+    const onPlayCard = vi.fn()
+    const g = playingGame([joker, c('clubs', '4')], {
+      tricks: [
+        trick({ winner: 1 }),
+        trick({ lead_suit: 'clubs', cards: [{ player_id: 'p1', seat: 1, card: c('clubs', '9') }] }),
+      ],
+    })
+    render(<PlayArea view={tableView(g, 'p0')} onPlayCard={onPlayCard} />)
+    await userEvent.click(screen.getByTestId('hand-card-none-Joker'))
+    expect(onPlayCard).toHaveBeenCalledWith(joker, false)
+  })
+})

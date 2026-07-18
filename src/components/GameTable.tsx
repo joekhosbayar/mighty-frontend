@@ -1,4 +1,4 @@
-import type { Card } from '../core/types'
+import type { Card, Suit } from '../core/types'
 import type { TableView } from '../core/view'
 import type { ConnectionStatus } from '../api/ws'
 import type { BidInput } from '../core/rules'
@@ -17,7 +17,7 @@ export interface GameTableProps {
   onPass(): void
   onDiscard(cards: Card[]): void
   onCallPartner(card: Card): void
-  onPlayCard(card: Card, callJoker: boolean): void
+  onPlayCard(card: Card, callJoker: boolean, calledSuit?: Suit): void
   onLeave(): void
 }
 
