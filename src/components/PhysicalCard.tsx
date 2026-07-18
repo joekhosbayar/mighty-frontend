@@ -9,6 +9,7 @@ const suitSymbols: Record<Card['suit'], string> = {
   hearts: '♥',
   diamonds: '♦',
   clubs: '♣',
+  none: '',
 }
 
 export function PhysicalCard({ card }: PhysicalCardProps) {

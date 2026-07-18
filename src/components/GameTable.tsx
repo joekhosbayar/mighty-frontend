@@ -46,7 +46,41 @@ export function GameTable(props: GameTableProps) {
         {connection !== 'open' && <p role="status">Reconnecting…</p>}
         {error && <p role="alert">{error}</p>}
 
-      {view.phase === 'waiting' && <p>{`Waiting for players (${seated}/5)…`}</p>}
+      {view.phase === 'waiting' && (
+        <div className="panel" style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'center' }}>
+          <h2 style={{ color: 'var(--color-accent)', marginBottom: '2rem' }}>Waiting for players ({seated}/5)</h2>
+          <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {view.seats.map((seat, i) => (
+              <li key={i} style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                padding: '1rem', 
+                background: 'rgba(255, 255, 255, 0.03)', 
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 255, 255, 0.05)'
+              }}>
+                <span style={{ 
+                  color: seat.isEmpty ? 'var(--color-text-secondary)' : 'var(--color-text-primary)',
+                  fontStyle: seat.isEmpty ? 'italic' : 'normal',
+                  fontFamily: seat.isEmpty ? 'inherit' : 'var(--font-mono)'
+                }}>
+                  {seat.isEmpty ? `Seat ${i + 1} (Empty)` : seat.name}
+                </span>
+                {!seat.isEmpty && (
+                  <span style={{ 
+                    color: seat.isConnected ? 'var(--color-accent)' : 'var(--color-crimson)',
+                    fontSize: '0.85rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}>
+                    {seat.isConnected ? 'Connected' : 'Disconnected'}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {view.phase === 'bidding' && <BidPanel view={view} onBid={props.onBid} onPass={props.onPass} />}
       {view.phase === 'exchanging' && <ExchangePanel view={view} onDiscard={props.onDiscard} />}
       {view.phase === 'calling' && <FriendCallPanel view={view} onCallPartner={props.onCallPartner} onNoFriend={props.onNoFriend} />}

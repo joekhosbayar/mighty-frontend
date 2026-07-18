@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Card, Suit } from '../core/types'
 import type { TableView } from '../core/view'
-import { cardLabel, sameCard } from '../core/cards'
+import { sameCard } from '../core/cards'
 import { Hand } from './Hand'
 import { PhysicalCard } from './PhysicalCard'
 
@@ -47,7 +47,6 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
       <div className="seats-container">
         {view.seats.map((s, idx) => {
           const relIdx = mySeatIdx >= 0 ? (idx - mySeatIdx + 5) % 5 : idx
-          const trickCard = played.get(s.seat)
           const isTurn = s.isTurn ? 'is-turn' : ''
           return (
             <div key={s.seat} data-testid={`seat-${s.seat}`} className={`seat-wrapper ${POSITIONS[relIdx]}`}>

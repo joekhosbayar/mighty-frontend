@@ -19,9 +19,14 @@ function renderTable(over: Partial<GameTableProps> = {}, game = baseGame({ statu
 
 describe('GameTable', () => {
   it('shows game id and waiting status', () => {
-    renderTable({}, baseGame({ status: 'waiting', players: [player(0), player(1), null, null, null] }))
+    renderTable({}, baseGame({ status: 'waiting', players: [player(0), player(1, { is_connected: false }), null, null, null] }))
     expect(screen.getByTestId('game-id')).toHaveTextContent('g1')
     expect(screen.getByText(/waiting for players \(2\/5\)/i)).toBeInTheDocument()
+    expect(screen.getByText('Player 0')).toBeInTheDocument()
+    expect(screen.getByText('Connected')).toBeInTheDocument()
+    expect(screen.getByText('Player 1')).toBeInTheDocument()
+    expect(screen.getByText('Disconnected')).toBeInTheDocument()
+    expect(screen.getByText('Seat 3 (Empty)')).toBeInTheDocument()
   })
 
   it('renders the bid panel during bidding', () => {
