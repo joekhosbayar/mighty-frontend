@@ -47,7 +47,7 @@ export function LobbyScreen({ games, username, onCreate, onJoin, onRefresh, onLo
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                   <span style={{ fontFamily: 'var(--font-mono)' }}>Table {g.id.substring(0, 8)}</span>
                   <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
-                    Created {new Date(g.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    Created {new Date(g.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
                 <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
