@@ -28,7 +28,7 @@ export function ExchangePanel({ view, onDiscard }: ExchangePanelProps) {
   return (
     <section className="exchange panel" style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
       <h2 style={{ fontSize: '1.5rem', color: 'var(--color-accent)' }}>Discard exactly 3 cards</h2>
-      <Hand cards={view.hand} mode="select" selected={selected} onCard={toggle} />
+      <Hand cards={view.hand} mode="select" trump={view.trump} selected={selected} onCard={toggle} />
       <div style={{ marginTop: '1.5rem' }}>
         <button
           disabled={!isValidDiscard(handCards, selected)}

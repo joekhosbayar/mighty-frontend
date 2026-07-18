@@ -1,4 +1,4 @@
-import type { Card } from '../core/types'
+import type { Card, Suit } from '../core/types'
 import type { HandCard } from '../core/view'
 import { sameCard } from '../core/cards'
 import { PhysicalCard } from './PhysicalCard'
@@ -6,11 +6,12 @@ import { PhysicalCard } from './PhysicalCard'
 export interface HandProps {
   cards: HandCard[]
   mode: 'play' | 'select'
+  trump: Suit
   selected?: Card[]
   onCard(card: Card): void
 }
 
-export function Hand({ cards, mode, selected = [], onCard }: HandProps) {
+export function Hand({ cards, mode, trump, selected = [], onCard }: HandProps) {
   const isSelected = (card: Card) => selected.some(s => sameCard(s, card))
   return (
     <div className="hand-container" data-testid="hand">
@@ -26,7 +27,7 @@ export function Hand({ cards, mode, selected = [], onCard }: HandProps) {
             onClick={() => onCard(card)}
             style={isSel ? { transform: 'translateY(-15px)' } : undefined}
           >
-            <PhysicalCard card={card} />
+            <PhysicalCard card={card} trump={trump} />
           </button>
         )
       })}

@@ -89,7 +89,7 @@ export function GameTable(props: GameTableProps) {
       {view.phase === 'finished' && <ScoreBoard view={view} />}
 
       {(view.phase === 'bidding' || view.phase === 'calling') && view.hand.length > 0 && (
-          <Hand cards={view.hand} mode="play" onCard={() => undefined} />
+          <Hand cards={view.hand} mode="play" trump={view.trump} onCard={() => undefined} />
         )}
       </div>
     </main>

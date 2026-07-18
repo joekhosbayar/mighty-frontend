@@ -65,14 +65,14 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
             const trickCard = played.get(s.seat)
             return trickCard ? (
               <div key={`trick-${s.seat}`} data-testid={`trick-card-${s.seat}`}>
-                <PhysicalCard card={trickCard} />
+                <PhysicalCard card={trickCard} trump={view.trump} />
               </div>
             ) : null
           })}
         </div>
       </div>
 
-      <Hand cards={view.hand} mode="play" onCard={handleCard} />
+      <Hand cards={view.hand} mode="play" trump={view.trump} onCard={handleCard} />
       
       {pendingCaller && (
         <div role="dialog" aria-label="Call the Joker?">
