@@ -45,6 +45,8 @@ function errorMessage(e: unknown): string {
 
 export function createAppStore(deps: Deps): StoreApi<AppState> {
   let socket: SocketLike | null = null
+  let lastMove: { t: MoveType; payload: unknown } | null = null
+  let busyRetried = false
 
   return createStore<AppState>((set, get) => {
     const fail = (e: unknown) => {
@@ -59,7 +61,15 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
       socket?.close()
       socket = deps.makeSocket(gameId, get().token ?? '', {
         onGame: g => set({ game: g }),
-        onError: msg => set({ lastError: msg }),
+        onError: msg => {
+          if (msg === 'game busy' && lastMove && !busyRetried) {
+            busyRetried = true
+            const move = lastMove
+            setTimeout(() => socket?.sendMove(move.t, move.payload), 300)
+            return
+          }
+          set({ lastError: msg })
+        },
         onStatus: s => set({ connection: s }),
       })
       socket.connect()
@@ -105,6 +115,8 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
       logout() {
         socket?.close()
         socket = null
+        lastMove = null
+        busyRetried = false
         deps.storage.removeItem(TOKEN_KEY)
         set({
           token: null, userId: null, username: null,
@@ -137,12 +149,16 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
       },
 
       sendMove(t, payload) {
+        lastMove = { t, payload }
+        busyRetried = false
         socket?.sendMove(t, payload)
       },
 
       leaveTable() {
         socket?.close()
         socket = null
+        lastMove = null
+        busyRetried = false
         set({ screen: { name: 'lobby' }, game: null, connection: 'idle' })
       },
     }

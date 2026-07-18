@@ -83,3 +83,11 @@ export function parseServerMessage(raw: string): ServerMessage {
   }
   return { kind: 'game', game: data as unknown as Game }
 }
+
+export interface PlayCardPayload {
+  card: Card
+  call_joker: boolean
+  called_suit?: Suit // required when leading the Joker; omitted otherwise
+}
+
+export type CallPartnerPayload = { card: Card } | { no_friend: true }

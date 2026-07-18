@@ -5,12 +5,13 @@ import type { TableView } from '../core/view'
 export interface FriendCallPanelProps {
   view: TableView
   onCallPartner(card: Card): void
+  onNoFriend(): void
 }
 
 const SUITS: Suit[] = ['spades', 'hearts', 'diamonds', 'clubs']
 const RANKS: Rank[] = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2']
 
-export function FriendCallPanel({ view, onCallPartner }: FriendCallPanelProps) {
+export function FriendCallPanel({ view, onCallPartner, onNoFriend }: FriendCallPanelProps) {
   const [suit, setSuit] = useState<Suit>('hearts')
   const [rank, setRank] = useState<Rank>('A')
 
@@ -34,6 +35,7 @@ export function FriendCallPanel({ view, onCallPartner }: FriendCallPanelProps) {
         </select>
       </label>
       <button onClick={() => onCallPartner({ suit, rank })}>Call</button>
+      <button onClick={onNoFriend}>Play alone (no friend, 2× score)</button>
       <p>Calling a card from your own hand means you play alone (no friend, doubled score).</p>
     </section>
   )

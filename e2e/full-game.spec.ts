@@ -49,6 +49,14 @@ test('a browser player and four bots complete a full hand', async ({ page }) => 
         lastStatus = status
       }
     }
+    const leadSuit = page
+      .getByRole('dialog', { name: 'Lead the Joker' })
+      .getByRole('button', { name: '♥' })
+    if (await leadSuit.isVisible().catch(() => false)) {
+      console.log('[loop] leading the joker in hearts')
+      await leadSuit.click({ timeout: 2000 }).catch(() => undefined)
+      continue
+    }
     const noCall = page.getByRole('button', { name: 'Play without calling' })
     if (await noCall.isVisible().catch(() => false)) {
       console.log('[loop] declining joker call')

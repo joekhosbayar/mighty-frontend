@@ -10,7 +10,7 @@ function renderTable(over: Partial<GameTableProps> = {}, game = baseGame({ statu
     connection: 'open',
     error: null,
     onBid: vi.fn(), onPass: vi.fn(), onDiscard: vi.fn(),
-    onCallPartner: vi.fn(), onPlayCard: vi.fn(), onLeave: vi.fn(),
+    onCallPartner: vi.fn(), onNoFriend: vi.fn(), onPlayCard: vi.fn(), onLeave: vi.fn(),
     ...over,
   }
   render(<GameTable {...props} />)

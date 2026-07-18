@@ -72,9 +72,66 @@ describe('tableView', () => {
     expect(v.bids).toHaveLength(1)
     expect(v.contract?.points).toBe(5)
     expect(v.currentTrick).toHaveLength(1)
-    expect(v.scores.find(s => s.playerId === 'p0')?.cardPoints).toBe(12)
-    expect(v.scores.find(s => s.playerId === 'p2')?.cardPoints).toBe(0)
+    expect(v.scores.find(s => s.playerId === 'p0')?.roundScore).toBe(12)
+    expect(v.scores.find(s => s.playerId === 'p2')?.roundScore).toBe(0)
     expect(v.version).toBe(42)
     expect(v.gameId).toBe('g1')
+  })
+})
+
+describe('jokerLeadCard', () => {
+  const joker = c('none', 'Joker')
+
+  it('exposes the joker when leading with it playable', () => {
+    const g = baseGame({
+      status: 'playing', trump: 'hearts', current_turn: 0,
+      players: [player(0, { hand: [joker, c('clubs', '5')] }), player(1), player(2), player(3), player(4)],
+      tricks: [trick({ winner: 0 }), trick()],
+    })
+    expect(tableView(g, 'p0').jokerLeadCard).toEqual(joker)
+  })
+
+  it('is null when following, when not my turn, and when not holding the joker', () => {
+    const following = baseGame({
+      status: 'playing', trump: 'hearts', current_turn: 0,
+      players: [player(0, { hand: [joker] }), player(1), player(2), player(3), player(4)],
+      tricks: [
+        trick({ winner: 1 }),
+        trick({ lead_suit: 'clubs', cards: [{ player_id: 'p1', seat: 1, card: c('clubs', '9') }] }),
+      ],
+    })
+    expect(tableView(following, 'p0').jokerLeadCard).toBeNull()
+
+    const notMyTurn = baseGame({
+      status: 'playing', trump: 'hearts', current_turn: 2,
+      players: [player(0, { hand: [joker] }), player(1), player(2), player(3), player(4)],
+      tricks: [trick({ winner: 0 }), trick()],
+    })
+    expect(tableView(notMyTurn, 'p0').jokerLeadCard).toBeNull()
+
+    const noJoker = baseGame({
+      status: 'playing', trump: 'hearts', current_turn: 0,
+      players: [player(0, { hand: [c('clubs', '5')] }), player(1), player(2), player(3), player(4)],
+      tricks: [trick({ winner: 0 }), trick()],
+    })
+    expect(tableView(noJoker, 'p0').jokerLeadCard).toBeNull()
+  })
+})
+
+describe('score rows', () => {
+  it('separates round scores from card points', () => {
+    const g = baseGame({
+      status: 'finished',
+      players: [
+        player(0, { points: [c('hearts', 'A'), c('clubs', '10'), c('spades', 'K')] }),
+        player(1, { points: [c('diamonds', 'J')] }),
+        player(2), player(3), player(4),
+      ],
+      scores: { p0: 140, p1: 70 },
+    })
+    const rows = tableView(g, 'p0').scores
+    expect(rows.find(r => r.playerId === 'p0')).toMatchObject({ roundScore: 140, cardPoints: 3 })
+    expect(rows.find(r => r.playerId === 'p1')).toMatchObject({ roundScore: 70, cardPoints: 1 })
+    expect(rows.find(r => r.playerId === 'p2')).toMatchObject({ roundScore: 0, cardPoints: 0 })
   })
 })

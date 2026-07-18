@@ -22,6 +22,7 @@ export interface HandCard {
 export interface ScoreRow {
   playerId: string
   name: string
+  roundScore: number
   cardPoints: number
 }
 
@@ -41,6 +42,7 @@ export interface TableView {
   partnerCard: Card | null
   partnerRevealed: boolean
   jokerCallCard: Card | null
+  jokerLeadCard: Card | null
   scores: ScoreRow[]
   version: number
 }
@@ -64,6 +66,10 @@ export function tableView(game: Game, myPlayerId: string): TableView {
       : null
 
   const tricks = game.tricks ?? []
+  const jokerCard: Card = { suit: 'none', rank: 'Joker' }
+  const leading = (tricks[tricks.length - 1]?.cards.length ?? -1) === 0
+  const jokerLeadCard =
+    mySeat >= 0 && leading && playable.has(cardKey(jokerCard)) ? jokerCard : null
 
   return {
     gameId: game.id,
@@ -91,8 +97,16 @@ export function tableView(game: Game, myPlayerId: string): TableView {
     partnerCard: game.partner_card,
     partnerRevealed: game.partner_seat >= 0,
     jokerCallCard,
+    jokerLeadCard,
     scores: game.players.flatMap(p =>
-      p ? [{ playerId: p.id, name: p.name, cardPoints: game.scores?.[p.id] ?? 0 }] : [],
+      p
+        ? [{
+            playerId: p.id,
+            name: p.name,
+            roundScore: game.scores?.[p.id] ?? 0,
+            cardPoints: p.points?.length ?? 0,
+          }]
+        : [],
     ),
     version: game.version,
   }
