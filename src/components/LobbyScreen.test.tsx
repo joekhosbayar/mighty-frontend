@@ -6,7 +6,7 @@ import { baseGame, player } from '../core/testing/builders'
 
 describe('LobbyScreen', () => {
   const games = [
-    baseGame({ id: 'g1', status: 'waiting', players: [player(0), player(1), null, null, null] }),
+    baseGame({ id: 'g1', status: 'waiting', players: [player(0), player(1), null, null, null], created_at: '2026-07-17T22:43:52.453Z' }),
   ]
 
   it('lists waiting games with player counts and joins on click', async () => {
