@@ -12,7 +12,7 @@ const cards = [
 describe('Hand', () => {
   it('play mode: enables only playable cards and reports clicks', async () => {
     const onCard = vi.fn()
-    render(<Hand cards={cards} mode="play" onCard={onCard} />)
+    render(<Hand cards={cards} mode="play" trump="hearts" onCard={onCard} />)
     expect(screen.getByTestId('hand-card-clubs-5')).toBeDisabled()
     await userEvent.click(screen.getByTestId('hand-card-spades-A'))
     expect(onCard).toHaveBeenCalledWith(c('spades', 'A'))
@@ -20,7 +20,7 @@ describe('Hand', () => {
 
   it('select mode: everything enabled, selection marked pressed', async () => {
     const onCard = vi.fn()
-    render(<Hand cards={cards} mode="select" selected={[c('clubs', '5')]} onCard={onCard} />)
+    render(<Hand cards={cards} mode="select" trump="hearts" selected={[c('clubs', '5')]} onCard={onCard} />)
     expect(screen.getByTestId('hand-card-clubs-5')).toBeEnabled()
     expect(screen.getByTestId('hand-card-clubs-5')).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByTestId('hand-card-spades-A')).not.toHaveAttribute('aria-pressed')

@@ -31,12 +31,15 @@ describe('tableView', () => {
     const g = baseGame({
       status: 'playing', trump: 'hearts', current_turn: 0,
       players: [player(0, { hand }), player(1), player(2), player(3), player(4)],
-      tricks: [trick()], // trick 1: no trump lead
+      tricks: [trick()], // trick 1: leading
     })
     const v = tableView(g, 'p0')
     expect(v.hand.map(h => h.card)).toEqual([c('hearts', 'K'), c('spades', 'A'), c('clubs', '5')])
+    // Trick 1 lead: trump (♥K) and the mighty (♠A) are both barred; only the
+    // plain non-trump ♣5 may be led.
     expect(v.hand.find(h => h.card.rank === 'K')?.playable).toBe(false)
-    expect(v.hand.find(h => h.card.suit === 'spades')?.playable).toBe(true)
+    expect(v.hand.find(h => h.card.suit === 'spades')?.playable).toBe(false)
+    expect(v.hand.find(h => h.card.suit === 'clubs')?.playable).toBe(true)
   })
 
   it('leaves all cards unplayable outside the playing phase', () => {

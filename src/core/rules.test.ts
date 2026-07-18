@@ -23,16 +23,15 @@ describe('isLegalBid', () => {
     expect(isLegalBid({ points: 6, suit: 'clubs', is_no_trump: false }, bid(5, 'spades'))).toBe(true)
   })
 
-  it('at equal points, requires a strictly higher suit', () => {
-    expect(isLegalBid({ points: 5, suit: 'diamonds', is_no_trump: false }, bid(5, 'clubs'))).toBe(true)
-    expect(isLegalBid({ points: 5, suit: 'clubs', is_no_trump: false }, bid(5, 'clubs'))).toBe(false)
-    expect(isLegalBid({ points: 5, suit: 'hearts', is_no_trump: false }, bid(5, 'spades'))).toBe(false)
+  it('at equal points, any raise is illegal regardless of suit', () => {
+    expect(isLegalBid({ points: 5, suit: 'diamonds', is_no_trump: false }, bid(5, 'clubs'))).toBe(false)
+    expect(isLegalBid({ points: 5, suit: 'spades', is_no_trump: false }, bid(5, 'clubs'))).toBe(false)
+    expect(isLegalBid({ points: 5, suit: 'none', is_no_trump: true }, bid(5, 'spades'))).toBe(false)
   })
 
-  it('at equal points, no-trump beats any suit but nothing beats no-trump', () => {
-    expect(isLegalBid({ points: 5, suit: 'none', is_no_trump: true }, bid(5, 'spades'))).toBe(true)
-    expect(isLegalBid({ points: 5, suit: 'spades', is_no_trump: false }, bid(5, 'none', true))).toBe(false)
-    expect(isLegalBid({ points: 5, suit: 'none', is_no_trump: true }, bid(5, 'none', true))).toBe(false)
-    expect(isLegalBid({ points: 6, suit: 'clubs', is_no_trump: false }, bid(5, 'none', true))).toBe(true)
+  it('a raise must strictly exceed the current bid points', () => {
+    expect(isLegalBid({ points: 6, suit: 'clubs', is_no_trump: false }, bid(5, 'spades'))).toBe(true)
+    expect(isLegalBid({ points: 5, suit: 'clubs', is_no_trump: false }, bid(5, 'clubs'))).toBe(false)
+    expect(isLegalBid({ points: 4, suit: 'clubs', is_no_trump: false }, bid(5, 'clubs'))).toBe(false)
   })
 })

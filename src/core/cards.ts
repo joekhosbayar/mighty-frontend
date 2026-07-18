@@ -8,7 +8,7 @@ export const isJoker = (c: Card): boolean => c.rank === 'Joker'
 export const isPointCard = (c: Card): boolean => ['A', 'K', 'Q', 'J', '10'].includes(c.rank)
 
 export const mightyCard = (trump: Suit): Card =>
-  trump === 'spades' ? { suit: 'clubs', rank: 'A' } : { suit: 'spades', rank: 'A' }
+  trump === 'spades' ? { suit: 'diamonds', rank: 'A' } : { suit: 'spades', rank: 'A' }
 export const isMighty = (c: Card, trump: Suit): boolean => sameCard(c, mightyCard(trump))
 
 export const jokerCallerCard = (trump: Suit): Card =>

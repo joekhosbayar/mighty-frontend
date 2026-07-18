@@ -19,10 +19,10 @@ describe('legalPlays', () => {
     expect(legalPlays(playingGame([c('clubs', '5')], { status: 'bidding' }), 0)).toEqual([])
   })
 
-  it('when leading trick 1, forbids leading trump unless mighty or all-trump', () => {
+  it('when leading trick 1, forbids leading trump, mighty, and joker', () => {
     const hand = [c('hearts', 'K'), c('clubs', '5'), c('spades', 'A')] // hearts trump, ♠A mighty
     const g = playingGame(hand, { tricks: [trick()] })
-    expect(legalPlays(g, 0)).toEqual([c('clubs', '5'), c('spades', 'A')])
+    expect(legalPlays(g, 0)).toEqual([c('clubs', '5')])
   })
 
   it('when leading trick 1 with only trumps, allows them', () => {
@@ -60,7 +60,7 @@ describe('legalPlays', () => {
   })
 
   it('on trick 1, mighty cannot escape following suit when able to follow', () => {
-    const hand = [c('clubs', '5'), c('spades', 'A')]
+    const hand = [c('clubs', '5'), c('spades', 'A'), c('diamonds', '7')]
     const g = playingGame(hand, {
       tricks: [trick({ lead_suit: 'clubs', cards: [{ player_id: 'p4', seat: 4, card: c('clubs', '9') }] })],
     })
@@ -68,7 +68,7 @@ describe('legalPlays', () => {
   })
 
   it('when the joker is called and you hold it, only joker or mighty are playable', () => {
-    const hand = [c('clubs', '5'), c('none', 'Joker'), c('spades', 'A')]
+    const hand = [c('clubs', '5'), c('diamonds', '8'), c('none', 'Joker'), c('spades', 'A')]
     const g = playingGame(hand, {
       tricks: [
         trick({ winner: 1 }),
@@ -80,6 +80,58 @@ describe('legalPlays', () => {
       ],
     })
     expect(legalPlays(g, 0)).toEqual([c('none', 'Joker'), c('spades', 'A')])
+  })
+
+  it('cannot lead the joker on trick 1', () => {
+    const hand = [c('clubs', '5'), c('diamonds', '7'), c('none', 'Joker')]
+    const g = playingGame(hand, { tricks: [trick()] })
+    expect(legalPlays(g, 0)).toEqual([c('clubs', '5'), c('diamonds', '7')])
+  })
+
+  it('uses the diamond ace as mighty when spades is trump', () => {
+    // spades trump → ♦A is the mighty and cannot be led on trick 1, even though
+    // it is a diamond. If it were an ordinary diamond it would be a legal lead.
+    const hand = [c('hearts', '5'), c('diamonds', 'A'), c('clubs', '7')]
+    const g = playingGame(hand, { trump: 'spades', tricks: [trick()] })
+    expect(legalPlays(g, 0)).toEqual([c('hearts', '5'), c('clubs', '7')])
+  })
+
+  it('on trick 1, mighty may follow only as your sole card of the led suit', () => {
+    // hearts trump, ♠A mighty. Lead spades, ♠A is the only spade → legal follow.
+    const soleSpade = playingGame([c('spades', 'A'), c('clubs', '5'), c('hearts', '7')], {
+      tricks: [trick({ lead_suit: 'spades', cards: [{ player_id: 'p4', seat: 4, card: c('spades', '9') }] })],
+    })
+    expect(legalPlays(soleSpade, 0)).toEqual([c('spades', 'A')])
+
+    // Holding another spade, mighty cannot escape following with the plain spade.
+    const twoSpades = playingGame([c('spades', 'A'), c('spades', '2'), c('clubs', '5')], {
+      tricks: [trick({ lead_suit: 'spades', cards: [{ player_id: 'p4', seat: 4, card: c('spades', '9') }] })],
+    })
+    expect(legalPlays(twoSpades, 0)).toEqual([c('spades', '2')])
+  })
+
+  it('with 3 cards left holding both mighty and joker, forces one of them', () => {
+    const hand = [c('clubs', '5'), c('spades', 'A'), c('none', 'Joker')] // hearts trump
+    const g = playingGame(hand, {
+      tricks: [...Array.from({ length: 7 }, () => trick({ winner: 0 })), trick({ winner: 0 })],
+    })
+    expect(legalPlays(g, 0)).toEqual([c('spades', 'A'), c('none', 'Joker')])
+  })
+
+  it('with 2 cards left holding either mighty or joker, forces it', () => {
+    const hand = [c('clubs', '5'), c('spades', 'A')] // hearts trump
+    const g = playingGame(hand, {
+      tricks: [...Array.from({ length: 8 }, () => trick({ winner: 0 })), trick({ winner: 0 })],
+    })
+    expect(legalPlays(g, 0)).toEqual([c('spades', 'A')])
+  })
+
+  it('with 2 cards left holding only the joker, forces it', () => {
+    const hand = [c('clubs', '5'), c('none', 'Joker')] // hearts trump
+    const g = playingGame(hand, {
+      tricks: [...Array.from({ length: 8 }, () => trick({ winner: 0 })), trick({ winner: 0 })],
+    })
+    expect(legalPlays(g, 0)).toEqual([c('none', 'Joker')])
   })
 })
 

@@ -24,11 +24,13 @@ describe('BidPanel', () => {
     expect(onBid).toHaveBeenCalledWith({ points: 3, suit: 'none', is_no_trump: true })
   })
 
-  it('disables bids that do not beat the current bid', () => {
+  it('disables bids that do not beat the current bid', async () => {
     const view = biddingView({ current_bid: bid('p1', 3, 'hearts'), bids: [bid('p1', 3, 'hearts')] })
     render(<BidPanel view={view} onBid={vi.fn()} onPass={vi.fn()} />)
     expect(screen.getByRole('button', { name: '♣ 3' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: '♠ 3' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: '♠ 3' })).toBeDisabled()
+    await userEvent.selectOptions(screen.getByLabelText('Tricks:'), '4')
+    expect(screen.getByRole('button', { name: '♠ 4' })).toBeEnabled()
   })
 
   it('disables everything when it is not my turn', () => {

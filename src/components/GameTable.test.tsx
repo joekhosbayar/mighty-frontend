@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { GameTable, type GameTableProps } from './GameTable'
 import { tableView } from '../core/view'
 import { baseGame, bid, c, player, trick } from '../core/testing/builders'
+import { getTableName } from '../core/names'
 
 function renderTable(over: Partial<GameTableProps> = {}, game = baseGame({ status: 'waiting' })) {
   const props: GameTableProps = {
@@ -20,7 +21,7 @@ function renderTable(over: Partial<GameTableProps> = {}, game = baseGame({ statu
 describe('GameTable', () => {
   it('shows game id and waiting status', () => {
     renderTable({}, baseGame({ status: 'waiting', players: [player(0), player(1, { is_connected: false }), null, null, null] }))
-    expect(screen.getByTestId('game-id')).toHaveTextContent('g1')
+    expect(screen.getByTestId('game-id')).toHaveTextContent(getTableName('g1'))
     expect(screen.getByText(/waiting for players \(2\/5\)/i)).toBeInTheDocument()
     expect(screen.getByText('Player 0')).toBeInTheDocument()
     expect(screen.getByText('Connected')).toBeInTheDocument()

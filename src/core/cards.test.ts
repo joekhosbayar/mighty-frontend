@@ -12,10 +12,10 @@ describe('special card identity', () => {
     expect(isMighty(c('spades', 'A'), 'hearts')).toBe(true)
   })
 
-  it('mighty shifts to the club ace when spades are trump', () => {
-    expect(mightyCard('spades')).toEqual(c('clubs', 'A'))
+  it('mighty shifts to the diamond ace when spades are trump', () => {
+    expect(mightyCard('spades')).toEqual(c('diamonds', 'A'))
     expect(isMighty(c('spades', 'A'), 'spades')).toBe(false)
-    expect(isMighty(c('clubs', 'A'), 'spades')).toBe(true)
+    expect(isMighty(c('diamonds', 'A'), 'spades')).toBe(true)
   })
 
   it('joker caller is the club 3, shifting to spade 3 when clubs are trump', () => {

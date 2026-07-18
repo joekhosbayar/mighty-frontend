@@ -1,7 +1,9 @@
-import type { Card } from '../core/types'
+import type { Card, Suit } from '../core/types'
+import { isMighty } from '../core/cards'
 
 export interface PhysicalCardProps {
   card: Card
+  trump: Suit
 }
 
 const suitSymbols: Record<Card['suit'], string> = {
@@ -12,16 +14,16 @@ const suitSymbols: Record<Card['suit'], string> = {
   none: '',
 }
 
-export function PhysicalCard({ card }: PhysicalCardProps) {
+export function PhysicalCard({ card, trump }: PhysicalCardProps) {
   const isJoker = card.rank === 'Joker'
-  const isMighty = card.suit === 'spades' && card.rank === 'A'
-  
+  const isMightyCard = isMighty(card, trump)
+
   let label = isJoker ? 'J' : card.rank
   let suit = isJoker ? 'kr' : suitSymbols[card.suit]
   let suitClass = isJoker ? 'suit-joker' : `suit-${card.suit}`
-  
+
   return (
-    <div className={`card-physical ${suitClass}`} style={isMighty || isJoker ? { border: '2px solid var(--color-accent)' } : undefined}>
+    <div className={`card-physical ${suitClass}`} style={isMightyCard || isJoker ? { border: '2px solid var(--color-accent)' } : undefined}>
       <div className="card-rank">{label}</div>
       <div className="card-suit">{suit}</div>
       <div className="card-watermark">{suit}</div>

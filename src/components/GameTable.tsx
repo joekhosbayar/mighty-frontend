@@ -1,5 +1,6 @@
 import type { Card, Suit } from '../core/types'
 import type { TableView } from '../core/view'
+import { getTableName } from '../core/names'
 import type { ConnectionStatus } from '../api/ws'
 import type { BidInput } from '../core/rules'
 import { BidPanel } from './BidPanel'
@@ -31,7 +32,7 @@ export function GameTable(props: GameTableProps) {
       <header className="table-header">
         <div className="table-header-info">
           <span className="phase-title" style={{ margin: 0 }}>Mighty</span>
-          <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }} data-testid="game-id">Table {view.gameId.substring(0, 8)}</span>
+          <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }} data-testid="game-id">{getTableName(view.gameId)}</span>
           <span className="phase-tag" data-testid="phase">{view.phase}</span>
           {view.contract && (
             <span style={{ color: 'var(--color-accent)' }}>
@@ -88,7 +89,7 @@ export function GameTable(props: GameTableProps) {
       {view.phase === 'finished' && <ScoreBoard view={view} />}
 
       {(view.phase === 'bidding' || view.phase === 'calling') && view.hand.length > 0 && (
-          <Hand cards={view.hand} mode="play" onCard={() => undefined} />
+          <Hand cards={view.hand} mode="play" trump={view.trump} onCard={() => undefined} />
         )}
       </div>
     </main>

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import type { Game } from '../core/types'
+import { getTableName } from '../core/names'
 
 export interface LobbyScreenProps {
   games: Game[]
@@ -44,9 +45,16 @@ export function LobbyScreen({ games, username, onCreate, onJoin, onRefresh, onLo
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {games.map(g => (
               <li key={g.id} className="panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: 0 }}>
-                <span style={{ fontFamily: 'var(--font-mono)' }}>Table {g.id.substring(0, 8)}</span>
-                <span style={{ color: 'var(--color-accent)' }}>{`${g.players.filter(Boolean).length}/5 seated`}</span>
-                <button onClick={() => onJoin(g.id)}>Join Table</button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>{getTableName(g.id)}</span>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
+                    Created {new Date(g.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--color-accent)' }}>{`${g.players.filter(Boolean).length}/5 seated`}</span>
+                  <button onClick={() => onJoin(g.id)}>Join Table</button>
+                </div>
               </li>
             ))}
           </ul>

@@ -15,11 +15,7 @@ export function isLegalBid(bid: BidInput, currentBid: Bid | null): boolean {
     return false
   }
   if (!currentBid) return true
-  if (bid.points < currentBid.points) return false
-  if (bid.points === currentBid.points) {
-    if (currentBid.is_no_trump) return false
-    if (!bid.is_no_trump && SUIT_RANK[bid.suit] <= SUIT_RANK[currentBid.suit]) return false
-  }
+  if (bid.points <= currentBid.points) return false
   return true
 }
 
@@ -30,26 +26,44 @@ export function legalPlays(game: Game, seat: number): Card[] {
   const t = tricks[tricks.length - 1]
   if (!t) return []
   const hand = p.hand
+  const trump = game.trump
   const isFirstTrick = tricks.length === 1
+  const leading = t.cards.length === 0
 
-  if (t.joker_called && hand.some(isJoker)) {
-    const forced = hand.filter(card => isJoker(card) || isMighty(card, game.trump))
-    if (forced.length > 0) return forced
-  }
+  const mighty = (card: Card): boolean => isMighty(card, trump)
+  const special = (card: Card): boolean => mighty(card) || isJoker(card)
 
-  if (t.cards.length === 0) {
-    if (isFirstTrick && hand.some(card => card.suit !== game.trump)) {
-      return hand.filter(card => card.suit !== game.trump || isMighty(card, game.trump))
-    }
-    return [...hand]
+  // Late-game forcing: the mighty and joker cannot be hoarded for the final tricks.
+  // Taking these early returns (and the joker-called one below) before the
+  // first-trick checks is safe because they never coincide with trick 1: hand
+  // size 2-3 only occurs on tricks 8-9, and the joker can only be called on
+  // tricks 2-9.
+  const hasMighty = hand.some(mighty)
+  const hasJoker = hand.some(isJoker)
+  if (hand.length === 3 && hasMighty && hasJoker) return hand.filter(special)
+  if (hand.length === 2 && (hasMighty || hasJoker)) return hand.filter(special)
+
+  // Joker called: its holder must surrender the joker (the mighty is the only out).
+  if (t.joker_called && hasJoker) return hand.filter(special)
+
+  if (leading) {
+    if (!isFirstTrick) return [...hand]
+    const hasPlainNonTrump = hand.some(card => card.suit !== trump && !special(card))
+    return hand.filter(card => {
+      if (special(card)) return false
+      if (card.suit === trump && hasPlainNonTrump) return false
+      return true
+    })
   }
 
   const lead = t.lead_suit
   const canFollow = hand.some(card => card.suit === lead)
+  const leadCount = hand.filter(card => card.suit === lead).length
   return hand.filter(card => {
+    if (isFirstTrick && isJoker(card)) return false
+    if (isFirstTrick && mighty(card)) return card.suit === lead && leadCount === 1
     if (card.suit === lead) return true
-    if (isJoker(card)) return true
-    if (isMighty(card, game.trump)) return !(isFirstTrick && canFollow)
+    if (special(card)) return true
     return !canFollow
   })
 }
