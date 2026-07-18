@@ -686,9 +686,9 @@ Expected: `captured N broadcasts to fixtures/full-game.json` with N > 20. If the
 Append to `src/core/replay.test.ts`:
 
 ```ts
+  // The capture may legitimately contain zero reveals (called card left in
+  // the kitty); the invariant is asserted for every state that has one.
   it('reveals the partner as the seat that played the called card', () => {
-    let checked = 0
-
     for (const g of states) {
       if (g.partner_seat >= 0 && g.partner_card) {
         const playedBy = (g.tricks ?? [])
@@ -697,13 +697,8 @@ Append to `src/core/replay.test.ts`:
             pc => pc.card.suit === g.partner_card!.suit && pc.card.rank === g.partner_card!.rank,
           )?.seat
         expect(playedBy).toBe(g.partner_seat)
-        checked++
       }
     }
-
-    // The capture may legitimately contain zero reveals (called card in the
-    // kitty); assert we at least evaluated the invariant when present.
-    expect(checked).toBeGreaterThanOrEqual(0)
   })
 ```
 
