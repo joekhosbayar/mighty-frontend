@@ -125,6 +125,14 @@ describe('legalPlays', () => {
     })
     expect(legalPlays(g, 0)).toEqual([c('spades', 'A')])
   })
+
+  it('with 2 cards left holding only the joker, forces it', () => {
+    const hand = [c('clubs', '5'), c('none', 'Joker')] // hearts trump
+    const g = playingGame(hand, {
+      tricks: [...Array.from({ length: 8 }, () => trick({ winner: 0 })), trick({ winner: 0 })],
+    })
+    expect(legalPlays(g, 0)).toEqual([c('none', 'Joker')])
+  })
 })
 
 describe('canCallJoker', () => {

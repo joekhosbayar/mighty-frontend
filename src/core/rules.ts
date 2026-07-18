@@ -34,6 +34,10 @@ export function legalPlays(game: Game, seat: number): Card[] {
   const special = (card: Card): boolean => mighty(card) || isJoker(card)
 
   // Late-game forcing: the mighty and joker cannot be hoarded for the final tricks.
+  // Taking these early returns (and the joker-called one below) before the
+  // first-trick checks is safe because they never coincide with trick 1: hand
+  // size 2-3 only occurs on tricks 8-9, and the joker can only be called on
+  // tricks 2-9.
   const hasMighty = hand.some(mighty)
   const hasJoker = hand.some(isJoker)
   if (hand.length === 3 && hasMighty && hasJoker) return hand.filter(special)
