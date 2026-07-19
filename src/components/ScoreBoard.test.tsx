@@ -50,4 +50,16 @@ describe('ScoreBoard', () => {
     const row0 = screen.getByTestId('score-row-p0')
     expect(row0).toHaveTextContent('+20')
   })
+  it('renders one row per seated player in a four-player game', () => {
+    const game = {
+      config: { num_players: 4, allow_joker_partner: true, fail_dist: 'equal_split' },
+      players: [
+        { id: 'a', name: 'A', seat: 0 }, { id: 'b', name: 'B', seat: 1 },
+        { id: 'c', name: 'C', seat: 2 }, { id: 'd', name: 'D', seat: 3 }, null,
+      ],
+      scores: { a: 3, b: 3, c: -3, d: -3 },
+    } as never
+    render(<ScoreBoard view={tableView(game, 'a')} />)
+    expect(screen.getAllByTestId(/score-row-/)).toHaveLength(4)
+  })
 })

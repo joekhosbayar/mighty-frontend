@@ -18,7 +18,8 @@ const SUIT_OPTIONS: { suit: Suit; label: string }[] = [
 ]
 
 export function BidPanel({ view, onBid, onPass }: BidPanelProps) {
-  const [points, setPoints] = useState(3)
+  const minBid = view.config?.num_players === 4 ? 14 : 13
+  const [points, setPoints] = useState(minBid)
   const candidate = (suit: Suit): BidInput => ({ points, suit, is_no_trump: suit === 'none' })
 
   return (
@@ -33,7 +34,7 @@ export function BidPanel({ view, onBid, onPass }: BidPanelProps) {
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontFamily: 'var(--font-mono)' }}>
           Tricks:
           <select value={points} onChange={e => setPoints(Number(e.target.value))}>
-            {[3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+            {Array.from({ length: 20 - minBid + 1 }, (_, i) => i + minBid).map(n => (
               <option key={n} value={n}>{n}</option>
             ))}
           </select>
@@ -43,7 +44,7 @@ export function BidPanel({ view, onBid, onPass }: BidPanelProps) {
           {SUIT_OPTIONS.map(({ suit, label }) => (
             <button
               key={suit}
-              disabled={!view.isMyTurn || !isLegalBid(candidate(suit), view.currentBid)}
+              disabled={!view.isMyTurn || !isLegalBid(candidate(suit), view.currentBid, minBid)}
               onClick={() => onBid(candidate(suit))}
               style={{ minWidth: '4rem' }}
             >

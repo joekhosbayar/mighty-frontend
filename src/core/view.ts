@@ -1,4 +1,4 @@
-import type { Bid, Card, Game, Phase, PlayedCard, Suit } from './types'
+import type { Bid, Card, Game, GameConfig, Phase, PlayedCard, Suit } from './types'
 import { cardKey, jokerCallerCard, sortHand } from './cards'
 import { canCallJoker, legalPlays } from './rules'
 
@@ -45,6 +45,7 @@ export interface TableView {
   jokerLeadCard: Card | null
   scores: ScoreRow[]
   version: number
+  config?: GameConfig
 }
 
 export function tableView(game: Game, myPlayerId: string): TableView {
@@ -109,5 +110,6 @@ export function tableView(game: Game, myPlayerId: string): TableView {
         : [],
     ),
     version: game.version,
+    config: game.config,
   }
 }
