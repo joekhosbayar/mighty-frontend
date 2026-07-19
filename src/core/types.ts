@@ -1,4 +1,11 @@
 export type Suit = 'spades' | 'diamonds' | 'hearts' | 'clubs' | 'none'
+export type FailDist = 'equal_split' | 'declarer_alone' | 'two_one_split'
+
+export interface GameConfig {
+  num_players: number
+  allow_joker_partner: boolean
+  fail_dist: FailDist
+}
 export type Rank =
   | 'A' | 'K' | 'Q' | 'J' | '10' | '9' | '8' | '7' | '6' | '5' | '4' | '3' | '2' | 'Joker'
 
@@ -42,6 +49,7 @@ export interface Trick {
 export interface Game {
   id: string
   status: Phase
+  config?: GameConfig
   players: (Player | null)[]
   kitty?: Card[]
   current_turn: number

@@ -25,6 +25,18 @@ describe('createHttp', () => {
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer tok')
   })
 
+  it('posts game config to createGame', async () => {
+    const f = fakeFetch(200, { id: 'g1' })
+    const http = createHttp(f)
+    await http.createGame('tok', { num_players: 4, allow_joker_partner: false, fail_dist: 'two_one_split' } as any)
+    const init = (f as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit
+    expect(JSON.parse(String(init.body))).toEqual({
+      num_players: 4,
+      allow_joker_partner: false,
+      fail_dist: 'two_one_split',
+    })
+  })
+
   it('joins, lists, and gets with the right paths', async () => {
     const f = fakeFetch(200, [])
     const http = createHttp(f)
