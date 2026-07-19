@@ -15,7 +15,11 @@ export interface Card {
 }
 
 export type Phase = 'waiting' | 'bidding' | 'exchanging' | 'calling' | 'playing' | 'finished'
-export type MoveType = 'bid' | 'pass' | 'discard' | 'call_partner' | 'play_card'
+export type MoveType = 'bid' | 'pass' | 'discard' | 'call_partner' | 'play_card' | 'play_again' | 'change_config'
+
+export interface ChangeConfigPayload {
+  num_players: number
+}
 
 export interface Bid {
   player_id: string
@@ -65,6 +69,8 @@ export interface Game {
   trump: Suit
   tricks: Trick[] | null
   scores: Record<string, number> | null
+  total_scores?: Record<string, number>
+  play_again_votes?: Record<number, boolean>
   version: number
   created_at: string
   updated_at: string
