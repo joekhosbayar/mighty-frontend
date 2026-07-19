@@ -23,26 +23,29 @@ function BidBubble({ playerId, bids, passedPlayers }: { playerId: string, bids: 
   
   const [bubble, setBubble] = useState<{ id: number, text: string } | null>(null);
   
-  const prevBidRef = useRef(myLastBid);
+  const prevBidHash = myLastBid ? `${myLastBid.points}-${myLastBid.suit}-${myLastBid.is_no_trump}` : '';
+  const prevBidRef = useRef(prevBidHash);
   const prevPassedRef = useRef(isPassed);
 
   useEffect(() => {
     let text = null;
     if (isPassed && !prevPassedRef.current) {
       text = '🏳️ Pass';
-    } else if (myLastBid && myLastBid !== prevBidRef.current) {
+    } else if (myLastBid && prevBidHash !== prevBidRef.current) {
       text = `${myLastBid.points} ${myLastBid.is_no_trump ? 'NT' : myLastBid.suit}`;
     }
     
-    prevBidRef.current = myLastBid;
+    prevBidRef.current = prevBidHash;
     prevPassedRef.current = isPassed;
 
     if (text) {
       setBubble({ id: Date.now(), text });
       const timer = setTimeout(() => setBubble(null), 1500);
       return () => clearTimeout(timer);
+    } else if (!isPassed && !myLastBid) {
+      setBubble(null);
     }
-  }, [myLastBid, isPassed]);
+  }, [myLastBid, isPassed, prevBidHash]);
 
   if (!bubble) return null;
   return <div key={bubble.id} className="anim-bubble">{bubble.text}</div>;
