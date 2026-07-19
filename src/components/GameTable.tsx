@@ -35,59 +35,65 @@ export function GameTable(props: GameTableProps) {
   const showTimer = ['bidding', 'exchanging', 'calling', 'playing'].includes(view.phase)
 
   // Track bids for toast notification
-  const [toast, setToast] = useState<{ id: number, text: string } | null>(null)
+  const [toasts, setToasts] = useState<{ id: number, text: string }[]>([])
   const prevBidsLen = useRef(view.bids.length)
 
   useEffect(() => {
-    // Only fire if the phase is bidding (or calling/exchanging, if a bid just finished)
     if (view.bids.length > prevBidsLen.current) {
-      const latestBid = view.bids[view.bids.length - 1]
-      const player = view.seats.find(s => s.playerId === latestBid.player_id)
-      const isPass = latestBid.points === 0
-      const text = isPass 
-        ? `${player?.name ?? latestBid.player_id} passed`
-        : `${player?.name ?? latestBid.player_id} bid ${latestBid.points} ${latestBid.is_no_trump ? 'NT' : latestBid.suit}`
+      const newBids = view.bids.slice(prevBidsLen.current)
       
-      const id = Date.now()
-      setToast({ id, text })
+      const newToasts = newBids.map((bid, idx) => {
+        const player = view.seats.find(s => s.playerId === bid.player_id)
+        const isPass = bid.points === 0
+        const text = isPass 
+          ? `${player?.name ?? bid.player_id} passed`
+          : `${player?.name ?? bid.player_id} bid ${bid.points} ${bid.is_no_trump ? 'NT' : bid.suit}`
+        return { id: Date.now() + idx, text }
+      })
+
+      setToasts(prev => [...prev, ...newToasts])
       
-      const timer = setTimeout(() => {
-        setToast(current => current?.id === id ? null : current)
-      }, 3000)
-      
-      prevBidsLen.current = view.bids.length
-      return () => clearTimeout(timer)
+      newToasts.forEach(t => {
+        setTimeout(() => {
+          setToasts(prev => prev.filter(toast => toast.id !== t.id))
+        }, 3000)
+      })
     }
     prevBidsLen.current = view.bids.length
   }, [view.bids, view.seats])
 
   return (
     <main className="table" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {toast && (
-        <div style={{
-          position: 'fixed',
-          top: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 1000,
-          pointerEvents: 'none'
-        }}>
-          <div style={{
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 1000,
+        pointerEvents: 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem',
+        alignItems: 'center'
+      }}>
+        {toasts.map(toast => (
+          <div key={toast.id} style={{
             background: 'var(--color-surface)',
             border: '1px solid var(--color-glass-border)',
             color: 'var(--color-accent)',
-            padding: '1rem 2rem',
+            padding: '0.75rem 1.5rem',
             borderRadius: '20px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
             fontFamily: 'var(--font-mono)',
             fontWeight: 'bold',
-            fontSize: '1.2rem',
-            animation: 'slideInDown 0.3s ease-out'
+            fontSize: '1.1rem',
+            animation: 'slideInDown 0.3s ease-out',
+            whiteSpace: 'nowrap'
           }}>
             {toast.text}
           </div>
-        </div>
-      )}
+        ))}
+      </div>
       <header className="table-header">
         <div className="table-header-info">
           <span className="phase-title" style={{ margin: 0 }}>Mighty</span>
