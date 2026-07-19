@@ -10,6 +10,11 @@ const backendProxy = {
     target: 'http://localhost:8080',
     changeOrigin: true,
     ws: true,
+    bypass(req: any) {
+      if (req.headers.accept?.includes('text/html')) {
+        return '/index.html'
+      }
+    },
     configure(proxy: { on(ev: string, cb: (proxyReq: { removeHeader(n: string): void }) => void): void }) {
       proxy.on('proxyReqWs', proxyReq => proxyReq.removeHeader('origin'))
     },

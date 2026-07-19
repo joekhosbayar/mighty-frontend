@@ -1,10 +1,8 @@
-import { useStore } from 'zustand'
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { Game, MoveType } from '../core/types'
 import { ApiError, createHttp, decodeToken, type Http } from '../api/http'
 import { GameSocket, type ConnectionStatus, type GameSocketCallbacks } from '../api/ws'
 
-export type AppScreen = { name: 'auth' } | { name: 'lobby' } | { name: 'table'; gameId: string }
 
 export interface SocketLike {
   connect(): void
@@ -18,21 +16,23 @@ export interface Deps {
   storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 }
 
+export type ResumeResult = { ok: true } | { ok: false; reason: 'finished' | 'unavailable' }
+
 export interface AppState {
   token: string | null
   userId: string | null
   username: string | null
-  screen: AppScreen
   lobbyGames: Game[]
   game: Game | null
   connection: ConnectionStatus
   lastError: string | null
-  signup(u: string, p: string, email: string): Promise<void>
-  login(u: string, p: string): Promise<void>
+  signup(u: string, p: string, email: string): Promise<boolean>
+  login(u: string, p: string): Promise<boolean>
   logout(): void
   refreshLobby(): Promise<void>
-  createGame(): Promise<void>
-  joinGame(gameId: string): Promise<void>
+  createGame(): Promise<string | null>
+  joinGame(gameId: string): Promise<boolean>
+  resumeGame(gameId: string, signal?: AbortSignal): Promise<ResumeResult>
   sendMove(t: MoveType, payload: unknown): void
   leaveTable(): void
 }
@@ -76,7 +76,7 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
     }
 
     const enterGame = (g: Game) => {
-      set({ game: g, screen: { name: 'table', gameId: g.id }, lastError: null })
+      set({ game: g, lastError: null })
       openSocket(g.id)
     }
 
@@ -87,7 +87,6 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
 
     return {
       ...session,
-      screen: saved ? ({ name: 'lobby' } as const) : ({ name: 'auth' } as const),
       lobbyGames: [],
       game: null,
       connection: 'idle',
@@ -96,9 +95,10 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
       async signup(u, p, email) {
         try {
           await deps.http.signup(u, p, email)
-          await get().login(u, p)
+          return await get().login(u, p)
         } catch (e) {
           set({ lastError: errorMessage(e) })
+          return false
         }
       },
 
@@ -106,9 +106,11 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
         try {
           const token = await deps.http.login(u, p)
           deps.storage.setItem(TOKEN_KEY, token)
-          set({ token, ...decodeToken(token), screen: { name: 'lobby' }, lastError: null })
+          set({ token, ...decodeToken(token), lastError: null })
+          return true
         } catch (e) {
           set({ lastError: errorMessage(e) })
+          return false
         }
       },
 
@@ -119,8 +121,7 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
         busyRetried = false
         deps.storage.removeItem(TOKEN_KEY)
         set({
-          token: null, userId: null, username: null,
-          screen: { name: 'auth' }, game: null, connection: 'idle',
+          token: null, userId: null, username: null, game: null, connection: 'idle',
         })
       },
 
@@ -134,17 +135,45 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
 
       async createGame() {
         try {
-          enterGame(await deps.http.createGame(get().token ?? ''))
+          const g = await deps.http.createGame(get().token ?? '')
+          enterGame(g)
+          return g.id
         } catch (e) {
           fail(e)
+          return null
         }
       },
 
       async joinGame(gameId) {
         try {
           enterGame(await deps.http.joinGame(get().token ?? '', gameId))
+          return true
         } catch (e) {
           fail(e)
+          return false
+        }
+      },
+
+      async resumeGame(gameId, signal) {
+        if (get().game?.id === gameId) return { ok: true }
+        try {
+          const g = await deps.http.getGame(gameId)
+          if (signal?.aborted) return { ok: false, reason: 'unavailable' }
+          if (g.status === 'finished') {
+            set({ lastError: 'Game has ended' })
+            return { ok: false, reason: 'finished' }
+          }
+          if (!g.players.some(p => p?.id === get().userId)) {
+            set({ lastError: 'That game is no longer available' })
+            return { ok: false, reason: 'unavailable' }
+          }
+          set({ game: g, lastError: null })
+          openSocket(gameId)
+          return { ok: true }
+        } catch (e) {
+          if (e instanceof ApiError && e.status === 401) get().logout()
+          set({ lastError: 'That game is no longer available' })
+          return { ok: false, reason: 'unavailable' }
         }
       },
 
@@ -159,7 +188,7 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
         socket = null
         lastMove = null
         busyRetried = false
-        set({ screen: { name: 'lobby' }, game: null, connection: 'idle' })
+        set({ game: null, connection: 'idle' })
       },
     }
   })
@@ -198,6 +227,4 @@ export function appStore(): StoreApi<AppState> {
   return defaultStore
 }
 
-export function useApp<T>(selector: (s: AppState) => T): T {
-  return useStore(appStore(), selector)
-}
+export { StoreProvider, useApp } from './context'

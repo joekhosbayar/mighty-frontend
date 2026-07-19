@@ -1,5 +1,6 @@
 import { tableView } from '../core/view'
 import type { PlayCardPayload, CallPartnerPayload } from '../core/types'
+import { useNavigate } from 'react-router'
 import { useApp } from '../store'
 import { GameTable } from './GameTable'
 
@@ -9,7 +10,7 @@ export function GameScreen() {
   const connection = useApp(s => s.connection)
   const lastError = useApp(s => s.lastError)
   const sendMove = useApp(s => s.sendMove)
-  const leaveTable = useApp(s => s.leaveTable)
+  const navigate = useNavigate()
 
   if (!game || !userId) return <p>Loading game…</p>
 
@@ -30,7 +31,7 @@ export function GameScreen() {
           ...(calledSuit ? { called_suit: calledSuit } : {}),
         } satisfies PlayCardPayload)
       }
-      onLeave={leaveTable}
+      onLeave={() => navigate('/lobby')}
     />
   )
 }
