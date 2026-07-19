@@ -27,6 +27,7 @@ describe('BidPanel', () => {
   it('disables bids that do not beat the current bid', async () => {
     const view = biddingView({ current_bid: bid('p1', 3, 'hearts'), bids: [bid('p1', 3, 'hearts')] })
     render(<BidPanel view={view} onBid={vi.fn()} onPass={vi.fn()} />)
+    await userEvent.selectOptions(screen.getByLabelText('Tricks:'), '3')
     expect(screen.getByRole('button', { name: '♣ 3' })).toBeDisabled()
     expect(screen.getByRole('button', { name: '♠ 3' })).toBeDisabled()
     await userEvent.selectOptions(screen.getByLabelText('Tricks:'), '4')

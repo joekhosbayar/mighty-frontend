@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Suit } from '../core/types'
 import type { TableView } from '../core/view'
 import { isLegalBid, type BidInput } from '../core/rules'
@@ -19,7 +19,18 @@ const SUIT_OPTIONS: { suit: Suit; label: string }[] = [
 
 export function BidPanel({ view, onBid, onPass }: BidPanelProps) {
   const minBid = view.config?.num_players === 4 ? 4 : 3
-  const [points, setPoints] = useState(minBid)
+  
+  // Calculate next logical bid ceiling at 10
+  const highestCurrentPoints = view.currentBid ? view.currentBid.points : (minBid - 1);
+  const startingPoints = Math.min(10, Math.max(minBid, highestCurrentPoints + 1));
+  
+  // Use state but initialize with the calculated starting points, and add effect to sync
+  const [points, setPoints] = useState(startingPoints)
+  
+  useEffect(() => {
+    setPoints(Math.min(10, Math.max(minBid, highestCurrentPoints + 1)));
+  }, [minBid, highestCurrentPoints]);
+
   const candidate = (suit: Suit): BidInput => ({ points, suit, is_no_trump: suit === 'none' })
 
   return (
