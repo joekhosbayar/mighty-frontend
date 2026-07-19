@@ -303,3 +303,28 @@ th {
   color: var(--color-text-secondary);
   font-weight: 400;
 }
+
+/* Add to end of src/styles.css */
+button {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.card-physical {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-physical:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
