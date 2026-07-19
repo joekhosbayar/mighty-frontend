@@ -14,11 +14,11 @@ describe('FriendCallPanel', () => {
     expect(screen.getByText(/waiting for the declarer/i)).toBeInTheDocument()
   })
 
-  it('calls the default hearts ace', async () => {
+  it('calls the default smart recommendation', async () => {
     const onCallPartner = vi.fn()
     render(<FriendCallPanel view={callingView()} onCallPartner={onCallPartner} onNoFriend={vi.fn()} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Call A of hearts' }))
-    expect(onCallPartner).toHaveBeenCalledWith({ suit: 'hearts', rank: 'A' })
+    await userEvent.click(screen.getByRole('button', { name: 'Call A of spades' }))
+    expect(onCallPartner).toHaveBeenCalledWith({ suit: 'spades', rank: 'A' })
   })
 
   it('calls a chosen suit and rank', async () => {
@@ -29,7 +29,7 @@ describe('FriendCallPanel', () => {
     const rankWheel = screen.getByRole('listbox', { name: 'Rank' })
 
     // Use scroll events to test the scroll handler logic
-    // Suit starts at 'hearts' (idx 1). We want 'diamonds' (idx 2).
+    // Suit starts at 'spades' (idx 0). We want 'diamonds' (idx 2).
     fireEvent.scroll(suitWheel, { target: { scrollTop: 80 } })
     
     // Rank starts at 'A' (idx 0). We want 'K' (idx 1).
@@ -45,8 +45,7 @@ describe('FriendCallPanel', () => {
     
     const suitWheel = screen.getByRole('listbox', { name: 'Suit' })
     
-    // Suit starts at 'hearts'. We want 'none' (Joker)
-    // 'hearts'(1) -> 'none'(4)
+    // Suit starts at 'spades'. We want 'none' (Joker)
     fireEvent.scroll(suitWheel, { target: { scrollTop: 160 } })
 
     await userEvent.click(screen.getByRole('button', { name: 'Call Joker' }))

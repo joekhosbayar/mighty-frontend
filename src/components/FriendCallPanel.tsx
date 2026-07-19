@@ -4,6 +4,8 @@ import type { TableView } from '../core/view'
 import { SlotWheel } from './SlotWheel'
 import { PhysicalCard } from './PhysicalCard'
 
+import { mightyCard, sameCard } from '../core/cards'
+
 export interface FriendCallPanelProps {
   view: TableView
   onCallPartner(card: Card): void
@@ -22,9 +24,49 @@ function formatSuit(s: Suit): React.ReactNode {
   return s
 }
 
+function getRecommendedFriend(view: TableView): Card | null {
+  const trump = view.contract?.suit || 'none'
+  const hand = view.myHand || []
+  const hasCard = (c: Card) => hand.some(hc => sameCard(hc, c))
+
+  const mighty = mightyCard(trump)
+  if (!hasCard(mighty)) return mighty
+
+  const joker: Card = { suit: 'none', rank: 'Joker' }
+  if (!hasCard(joker)) return joker
+
+  if (trump !== 'none') {
+    for (const r of RANKS) {
+      const c: Card = { suit: trump, rank: r }
+      if (!hasCard(c)) return c
+    }
+  }
+
+  for (const r of RANKS) {
+    for (const s of SUITS) {
+      if (s === 'none' || s === trump) continue
+      const c: Card = { suit: s, rank: r }
+      if (!hasCard(c)) return c
+    }
+  }
+  return null
+}
+
 export function FriendCallPanel({ view, onCallPartner, onNoFriend }: FriendCallPanelProps) {
-  const [suit, setSuit] = useState<Suit>('hearts')
-  const [rank, setRank] = useState<Rank>('A')
+  const [suit, setSuit] = useState<Suit>(() => {
+    if (view.amDeclarer) {
+      const rec = getRecommendedFriend(view)
+      if (rec) return rec.suit
+    }
+    return 'hearts'
+  })
+  const [rank, setRank] = useState<Rank>(() => {
+    if (view.amDeclarer) {
+      const rec = getRecommendedFriend(view)
+      if (rec) return rec.rank
+    }
+    return 'A'
+  })
 
   if (!view.amDeclarer) {
     return <p className="panel" style={{ textAlign: 'center', margin: '2rem auto', maxWidth: '400px', color: 'var(--color-text-secondary)' }}>Waiting for the declarer to call a friend…</p>
