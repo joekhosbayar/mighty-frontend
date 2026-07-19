@@ -9,6 +9,7 @@ import { FriendCallPanel } from './FriendCallPanel'
 import { Hand } from './Hand'
 import { PlayArea } from './PlayArea'
 import { ScoreBoard } from './ScoreBoard'
+import { TurnTimer } from './TurnTimer'
 
 export interface GameTableProps {
   view: TableView
@@ -28,6 +29,9 @@ export interface GameTableProps {
 export function GameTable(props: GameTableProps) {
   const { view, connection, error } = props
   const seated = view.seats.filter(s => !s.isEmpty).length
+  
+  // Show timer only when it's an active phase requiring input
+  const showTimer = ['bidding', 'exchanging', 'calling', 'playing'].includes(view.phase)
 
   return (
     <main className="table" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -42,7 +46,10 @@ export function GameTable(props: GameTableProps) {
             </span>
           )}
         </div>
-        <button onClick={props.onLeave}>Leave Table</button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          {showTimer && <TurnTimer updatedAt={view.updatedAt} />}
+          <button onClick={props.onLeave}>Leave Table</button>
+        </div>
       </header>
 
       <div className="table-content">

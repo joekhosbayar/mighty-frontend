@@ -492,3 +492,32 @@ button:active:not(:disabled), .mock-button:active:not(:disabled) {
   color: var(--color-crimson);
   font-weight: bold;
 }
+
+.turn-timer {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  color: var(--color-text-secondary);
+  background: var(--color-glass);
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-glass-border);
+  display: flex;
+  align-items: center;
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.timer-overtime {
+  color: var(--color-crimson);
+  border-color: var(--color-crimson);
+  font-weight: bold;
+}
+
+@keyframes heavyShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+.timer-shake {
+  animation: heavyShake 0.4s ease-in-out;
+}
