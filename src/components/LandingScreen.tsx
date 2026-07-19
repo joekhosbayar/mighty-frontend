@@ -42,7 +42,7 @@ export function LandingScreen() {
           <div><strong>5. Sloughing Points:</strong> A player who is void in the led suit throws an off-suit point card to their partner, who is currently winning the trick.</div>
           <div><strong>6. The Joker Caller (Ripper):</strong> A player leads the Joker Caller (♣3). The player holding the Joker is now forced to play it!</div>
           <div><strong>7. The Mighty's Defense:</strong> The Joker was forced out, but that player ALSO holds the Mighty! They play the Mighty instead, saving their Joker and winning the trick.</div>
-          <div><strong>8. The Joker's Revenge:</strong> The Joker is finally played. It beats everything except the Mighty. Since the Mighty was already played, the Joker is guaranteed to win.</div>
+          <div><strong>8. The Joker's Revenge:</strong> The Joker is finally played. It beats everything except the Mighty. Since the Mighty is already out of the game (played in Trick 7), the Joker is guaranteed to win.</div>
           <div><strong>9. Drawing Trumps:</strong> The Declarer leads high Trumps to exhaust the opponents' remaining trumps, ensuring their off-suit winners are safe.</div>
           <div><strong>10. The Final Trick:</strong> The Joker loses all its power again! Any remaining point cards are heavily contested as the final trick resolves.</div>
         </div>
