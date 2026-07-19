@@ -1,5 +1,5 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
-import type { Game, MoveType } from '../core/types'
+import type { Game, GameConfig, MoveType } from '../core/types'
 import { ApiError, createHttp, decodeToken, type Http } from '../api/http'
 import { GameSocket, type ConnectionStatus, type GameSocketCallbacks } from '../api/ws'
 
@@ -30,7 +30,7 @@ export interface AppState {
   login(u: string, p: string): Promise<boolean>
   logout(): void
   refreshLobby(): Promise<void>
-  createGame(): Promise<string | null>
+  createGame(config?: GameConfig): Promise<string | null>
   joinGame(gameId: string): Promise<boolean>
   resumeGame(gameId: string, signal?: AbortSignal): Promise<ResumeResult>
   sendMove(t: MoveType, payload: unknown): void
@@ -133,9 +133,9 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
         }
       },
 
-      async createGame() {
+      async createGame(config) {
         try {
-          const g = await deps.http.createGame(get().token ?? '')
+          const g = await deps.http.createGame(get().token ?? '', config)
           enterGame(g)
           return g.id
         } catch (e) {

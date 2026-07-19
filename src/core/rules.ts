@@ -7,8 +7,8 @@ export interface BidInput {
   is_no_trump: boolean
 }
 
-export function isLegalBid(bid: BidInput, currentBid: Bid | null): boolean {
-  if (bid.points < 3 || bid.points > 10) return false
+export function isLegalBid(bid: BidInput, currentBid: Bid | null, minPoints = 13): boolean {
+  if (bid.points < minPoints || bid.points > 20) return false
   if (bid.is_no_trump) {
     if (bid.suit !== 'none') return false
   } else if (!(bid.suit in SUIT_RANK)) {

@@ -1,4 +1,4 @@
-import type { Game } from '../core/types'
+import type { Game, GameConfig } from '../core/types'
 
 export class ApiError extends Error {
   readonly status: number
@@ -19,7 +19,7 @@ export interface SignupResult {
 export interface Http {
   signup(username: string, password: string, email: string): Promise<SignupResult>
   login(username: string, password: string): Promise<string>
-  createGame(token: string): Promise<Game>
+  createGame(token: string, config?: GameConfig): Promise<Game>
   joinGame(token: string, gameId: string): Promise<Game>
   listGames(): Promise<Game[]>
   getGame(gameId: string): Promise<Game>
@@ -47,7 +47,7 @@ export function createHttp(fetchFn: typeof fetch = fetch, base = ''): Http {
     signup: (username, password, email) => request('/auth/signup', post({ username, password, email })),
     login: async (username, password) =>
       (await request<{ token: string }>('/auth/login', post({ username, password }))).token,
-    createGame: token => request('/games', post({}, token)),
+    createGame: (token, config) => request('/games', post(config ?? {}, token)),
     joinGame: (token, gameId) => request(`/games/${gameId}/join`, post({}, token)),
     listGames: () => request('/games?status=waiting', undefined),
     getGame: gameId => request(`/games/${gameId}`, undefined),
