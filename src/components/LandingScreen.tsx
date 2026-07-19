@@ -33,6 +33,13 @@ export function LandingScreen() {
           Multipliers (×2) stack for special achievements: running the table (taking all 20 points), back-runs by the defenders, No-Trump contracts, and playing completely alone without a friend.
         </p>
 
+        <h2>Card Play Restrictions</h2>
+        <ul className="landing-restrictions">
+          <li><strong>First Trick (Leading):</strong> You cannot lead the Joker or the Mighty. You cannot lead a Trump card unless you only hold Trump and special cards.</li>
+          <li><strong>First Trick (Following):</strong> You cannot play the Joker. You cannot play the Mighty unless its base suit was led AND it is your only card in that suit.</li>
+          <li><strong>Late Game (Anti-Hoarding):</strong> The Mighty and Joker lose their power on the final trick. To prevent hoarding, you are forced to play them early: with 3 cards left in hand, if you hold both, you MUST play one. With 2 cards left, if you hold either, you MUST play it.</li>
+        </ul>
+
         <h2>10-Trick Tutorial (Example Game)</h2>
         <div className="landing-tutorial">
           <div><strong>1. The First Lead:</strong> The Declarer leads. Trump cannot be led. The Mighty cannot be played (unless void in the led suit). The Joker loses its power.</div>

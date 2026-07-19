@@ -394,6 +394,13 @@ button:active:not(:disabled), .mock-button:active:not(:disabled) {
   line-height: 1.6;
 }
 
+.landing-restrictions {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  padding-left: 1.5rem;
+  margin-bottom: 2rem;
+}
+
 .landing-tutorial {
   color: var(--color-text-secondary);
   line-height: 1.6;
