@@ -16,8 +16,8 @@ export function LobbyRoute() {
       games={games}
       username={username ?? ''}
       onRefresh={refreshLobby}
-      onCreate={async () => {
-        const id = await createGame()
+      onCreate={async (config) => {
+        const id = await createGame(config)
         if (id) navigate(`/games/${id}`)
       }}
       onJoin={async id => {

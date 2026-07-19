@@ -1,17 +1,20 @@
-import { useEffect } from 'react'
-import type { Game } from '../core/types'
+import { useEffect, useState } from 'react'
+import type { Game, GameConfig } from '../core/types'
 import { getTableName } from '../core/names'
 
 export interface LobbyScreenProps {
   games: Game[]
   username: string
-  onCreate(): void
+  onCreate(config: GameConfig): void
   onJoin(gameId: string): void
   onRefresh(): void
   onLogout(): void
 }
 
 export function LobbyScreen({ games, username, onCreate, onJoin, onRefresh, onLogout }: LobbyScreenProps) {
+  const [numPlayers, setNumPlayers] = useState(5)
+  const [failDist, setFailDist] = useState<GameConfig['fail_dist']>('equal_split')
+  const [allowJoker, setAllowJoker] = useState(true)
   useEffect(() => {
     onRefresh()
     const timer = setInterval(onRefresh, 3000)
@@ -34,7 +37,34 @@ export function LobbyScreen({ games, username, onCreate, onJoin, onRefresh, onLo
       <div className="table-content" style={{ maxWidth: '800px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <h2 style={{ margin: 0 }}>Open Tables</h2>
-          <button onClick={onCreate} style={{ background: 'var(--color-accent)', color: 'var(--color-ink)', fontWeight: 'bold' }}>Create Table</button>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <label>Players
+            <select aria-label="players" value={numPlayers} onChange={e => setNumPlayers(Number(e.target.value))}>
+              <option value={5}>5</option>
+              <option value={4}>4</option>
+            </select>
+          </label>
+          {numPlayers === 4 && (
+            <>
+              <label>Failure rule
+                <select aria-label="failure rule" value={failDist} onChange={e => setFailDist(e.target.value as GameConfig['fail_dist'])}>
+                  <option value="equal_split">Equal split</option>
+                  <option value="declarer_alone">Declarer pays alone</option>
+                  <option value="two_one_split">2x / 1x split</option>
+                </select>
+              </label>
+              <label>
+                <input type="checkbox" checked={allowJoker} onChange={e => setAllowJoker(e.target.checked)} /> Allow joker partner
+              </label>
+            </>
+          )}
+          <button
+            onClick={() => onCreate({ num_players: numPlayers, allow_joker_partner: numPlayers === 5 ? true : allowJoker, fail_dist: failDist })}
+            style={{ background: 'var(--color-accent)', color: 'var(--color-ink)', fontWeight: 'bold' }}
+          >
+            Create Table
+          </button>
+        </div>
         </div>
         
         {games.length === 0 ? (
@@ -52,7 +82,7 @@ export function LobbyScreen({ games, username, onCreate, onJoin, onRefresh, onLo
                   </span>
                 </div>
                 <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                  <span style={{ color: 'var(--color-accent)' }}>{`${g.players.filter(Boolean).length}/5 seated`}</span>
+                  <span style={{ color: 'var(--color-accent)' }}>{`${g.players.filter(Boolean).length}/${g.config?.num_players ?? 5} seated`}</span>
                   <button onClick={() => onJoin(g.id)}>Join Table</button>
                 </div>
               </li>

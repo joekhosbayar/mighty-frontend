@@ -43,13 +43,28 @@ describe('LobbyScreen', () => {
     }
   })
 
-  it('creates a game', async () => {
+  it('creates a four-player table with chosen fail rule', async () => {
     const onCreate = vi.fn()
     render(
-      <LobbyScreen games={[]} username="alice" onCreate={onCreate} onJoin={vi.fn()}
+      <LobbyScreen games={[]} username="u" onCreate={onCreate} onJoin={vi.fn()}
         onRefresh={vi.fn()} onLogout={vi.fn()} />,
     )
-    await userEvent.click(screen.getByRole('button', { name: 'Create Table' }))
-    expect(onCreate).toHaveBeenCalled()
+    await userEvent.selectOptions(screen.getByLabelText(/players/i), '4')
+    await userEvent.selectOptions(screen.getByLabelText(/failure/i), 'two_one_split')
+    await userEvent.click(screen.getByRole('button', { name: /create table/i }))
+    expect(onCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ num_players: 4, fail_dist: 'two_one_split' }),
+    )
+  })
+
+  it('shows seated count out of configured player count', () => {
+    const game = {
+      id: 'g', status: 'waiting', config: { num_players: 4, allow_joker_partner: true, fail_dist: 'equal_split' },
+      players: [{ id: 'a', name: 'A', seat: 0 }, null, null, null], created_at: new Date().toISOString(),
+    } as never
+    render(
+      <LobbyScreen games={[game]} username="u" onCreate={vi.fn()} onJoin={vi.fn()} onRefresh={vi.fn()} onLogout={vi.fn()} />,
+    )
+    expect(screen.getByText(/1\/4 seated/)).toBeInTheDocument()
   })
 })
