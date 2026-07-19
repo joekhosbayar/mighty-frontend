@@ -5,11 +5,11 @@ import { renderApp } from './test-utils'
 import { makeTestDeps, TEST_TOKEN } from '../core/testing/deps'
 
 describe('routing shell', () => {
-  it('redirects an unauthenticated deep link to /login', async () => {
+  it('redirects an unauthenticated deep link to /', async () => {
     const { deps } = makeTestDeps()
     renderApp(deps, ['/lobby'])
-    expect(await screen.findByRole('heading', { name: 'Mighty' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Username')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'MIGHTY' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Log In to Play' })).toBeInTheDocument()
   })
 
   it('redirects an authenticated user away from /login to the lobby', async () => {
