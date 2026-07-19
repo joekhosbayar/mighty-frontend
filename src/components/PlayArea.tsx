@@ -79,6 +79,11 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
 
   const mySeatIdx = view.seats.findIndex(s => s.isMe)
   
+  const guaranteedDefenderPoints = view.seats
+    .filter(s => !s.isDeclarer && (view.partnerRevealed || !view.partnerCard ? !s.isPartner : false))
+    .reduce((sum, s) => sum + s.capturedPoints.length, 0)
+  const contractBreached = view.contract && guaranteedDefenderPoints > (20 - view.contract.points)
+
   const POSITIONS = ['seat-pos-bottom', 'seat-pos-left', 'seat-pos-top-left', 'seat-pos-top-right', 'seat-pos-right']
 
   return (
@@ -115,6 +120,15 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
                       </div>
                     ))
                   )}
+                </div>
+              )}
+
+              {/* Frowny Face Emitter for Breached Contract */}
+              {s.isDeclarer && contractBreached && (
+                <div className="frowny-emitter" aria-hidden="true">
+                  <div className="frowny frowny-1">☹️</div>
+                  <div className="frowny frowny-2">😭</div>
+                  <div className="frowny frowny-3">📉</div>
                 </div>
               )}
             </div>
