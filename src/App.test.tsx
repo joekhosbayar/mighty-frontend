@@ -5,5 +5,5 @@ import App from './App'
 it('renders the landing screen by default', async () => {
   render(<App />)
   expect(await screen.findByRole('heading', { name: 'MIGHTY' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Log In to Play' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Log In to Play' })).toBeInTheDocument()
 })
