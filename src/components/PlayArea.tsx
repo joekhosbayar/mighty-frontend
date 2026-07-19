@@ -20,7 +20,6 @@ const LEAD_SUITS: { suit: Suit; label: string }[] = [
 export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
   const [pendingCaller, setPendingCaller] = useState<Card | null>(null)
   const [pendingJoker, setPendingJoker] = useState<Card | null>(null)
-  const played = new Map(view.currentTrick.map(pc => [pc.seat, pc.card]))
 
   const handleCard = (card: Card) => {
     if (view.jokerLeadCard && sameCard(card, view.jokerLeadCard)) setPendingJoker(card)
@@ -61,13 +60,16 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
         })}
 
         <div className="trick-area">
-          {view.seats.map((s) => {
-            const trickCard = played.get(s.seat)
-            return trickCard ? (
-              <div key={`trick-${s.seat}`} data-testid={`trick-card-${s.seat}`}>
-                <PhysicalCard card={trickCard} trump={view.trump} />
+          {view.currentTrick.map((pc, i) => {
+            return (
+              <div 
+                key={`trick-${pc.seat}-${i}`} 
+                data-testid={`trick-card-${pc.seat}`}
+                style={{ zIndex: i }}
+              >
+                <PhysicalCard card={pc.card} trump={view.trump} />
               </div>
-            ) : null
+            )
           })}
         </div>
       </div>
