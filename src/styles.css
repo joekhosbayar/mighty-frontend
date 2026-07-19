@@ -475,3 +475,20 @@ button:active:not(:disabled), .mock-button:active:not(:disabled) {
 .captured-animate {
   animation: slideInDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
+
+@keyframes wobble {
+  0% { transform: rotate(0deg) scale(1); }
+  15% { transform: rotate(-5deg) scale(1.1); }
+  30% { transform: rotate(5deg) scale(1.1); }
+  45% { transform: rotate(-5deg) scale(1.1); }
+  60% { transform: rotate(5deg) scale(1.1); }
+  75% { transform: rotate(-2deg) scale(1.05); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+.loser-friend-anim {
+  display: inline-block;
+  animation: wobble 1s infinite ease-in-out;
+  color: var(--color-crimson);
+  font-weight: bold;
+}

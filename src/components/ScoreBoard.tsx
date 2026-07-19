@@ -30,8 +30,17 @@ export function ScoreBoard({
         <tbody>
           {view.scores.map(row => {
             const seat = view.seats.find(s => s.name === row.name)
-            const role = seat?.isDeclarer ? 'Declarer' : seat?.isPartner ? 'Partner' : ''
-            const roleColor = role === 'Declarer' ? 'var(--color-accent)' : role === 'Partner' ? 'var(--color-text-primary)' : 'inherit'
+            const declarerRow = view.scores.find(r => view.seats.find(s => s.name === r.name)?.isDeclarer)
+            const isFailed = (declarerRow?.roundScore ?? 0) < 0
+
+            let role = seat?.isDeclarer ? 'Declarer' : seat?.isPartner ? 'Partner' : ''
+            let roleClass = ''
+            if (seat?.isPartner && isFailed) {
+              role = 'Loser Friend 🤡'
+              roleClass = 'loser-friend-anim'
+            }
+
+            const roleColor = role === 'Declarer' ? 'var(--color-accent)' : seat?.isPartner ? 'var(--color-text-primary)' : 'inherit'
             return (
               <tr key={row.playerId} data-testid={`score-row-${row.playerId}`}>
                 <td style={{ fontWeight: '600' }}>
@@ -55,7 +64,9 @@ export function ScoreBoard({
                   {row.totalScore > 0 ? `+${row.totalScore}` : row.totalScore}
                 </td>
                 <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)' }}>{row.cardPoints}</td>
-                <td style={{ color: roleColor, fontFamily: 'var(--font-mono)', fontSize: '0.85rem', textTransform: 'uppercase' }}>{role}</td>
+                <td style={{ color: roleColor, fontFamily: 'var(--font-mono)', fontSize: '0.85rem', textTransform: 'uppercase' }}>
+                  <span className={roleClass}>{role}</span>
+                </td>
               </tr>
             )
           })}
