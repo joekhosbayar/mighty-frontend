@@ -1,4 +1,3 @@
-import { useStore } from 'zustand'
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { Game, MoveType } from '../core/types'
 import { ApiError, createHttp, decodeToken, type Http } from '../api/http'
@@ -198,6 +197,4 @@ export function appStore(): StoreApi<AppState> {
   return defaultStore
 }
 
-export function useApp<T>(selector: (s: AppState) => T): T {
-  return useStore(appStore(), selector)
-}
+export { StoreProvider, useApp } from './context'
