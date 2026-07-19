@@ -30,6 +30,13 @@ describe('FriendCallPanel', () => {
     expect(onCallPartner).toHaveBeenCalledWith({ suit: 'diamonds', rank: 'K' })
   })
 
+  it('calls the joker', async () => {
+    const onCallPartner = vi.fn()
+    render(<FriendCallPanel view={callingView()} onCallPartner={onCallPartner} onNoFriend={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Call Joker' }))
+    expect(onCallPartner).toHaveBeenCalledWith({ suit: 'none', rank: 'Joker' })
+  })
+
   it('declares no friend', async () => {
     const onNoFriend = vi.fn()
     render(<FriendCallPanel view={callingView()} onCallPartner={vi.fn()} onNoFriend={onNoFriend} />)

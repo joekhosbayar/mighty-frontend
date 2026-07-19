@@ -36,8 +36,10 @@ export function FriendCallPanel({ view, onCallPartner, onNoFriend }: FriendCallP
           </select>
         </label>
       </div>
-      <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
         <button onClick={() => onCallPartner({ suit, rank })} style={{ background: 'var(--color-accent)', color: 'var(--color-ink)' }}>Call {rank} of {suit}</button>
+        <span style={{ color: 'var(--color-text-secondary)' }}>or</span>
+        <button onClick={() => onCallPartner({ suit: 'none', rank: 'Joker' })} style={{ background: 'var(--color-accent)', color: 'var(--color-ink)' }}>Call Joker</button>
         <span style={{ color: 'var(--color-text-secondary)' }}>or</span>
         <button onClick={onNoFriend} style={{ background: 'transparent' }}>Play alone (no friend, 2× score)</button>
       </div>
