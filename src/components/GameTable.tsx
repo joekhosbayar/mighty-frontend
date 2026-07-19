@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import type { Card, Suit } from '../core/types'
 import type { TableView } from '../core/view'
 import { getTableName } from '../core/names'
@@ -9,6 +10,7 @@ import { FriendCallPanel } from './FriendCallPanel'
 import { Hand } from './Hand'
 import { PlayArea } from './PlayArea'
 import { ScoreBoard } from './ScoreBoard'
+import { TurnTimer } from './TurnTimer'
 
 export interface GameTableProps {
   view: TableView
@@ -28,9 +30,70 @@ export interface GameTableProps {
 export function GameTable(props: GameTableProps) {
   const { view, connection, error } = props
   const seated = view.seats.filter(s => !s.isEmpty).length
+  
+  // Show timer only when it's an active phase requiring input
+  const showTimer = ['bidding', 'exchanging', 'calling', 'playing'].includes(view.phase)
+
+  // Track bids for toast notification
+  const [toasts, setToasts] = useState<{ id: number, text: string }[]>([])
+  const prevBidsLen = useRef(view.bids.length)
+
+  useEffect(() => {
+    if (view.bids.length > prevBidsLen.current) {
+      const newBids = view.bids.slice(prevBidsLen.current)
+      
+      const newToasts = newBids.map((bid, idx) => {
+        const player = view.seats.find(s => s.playerId === bid.player_id)
+        const isPass = bid.points === 0
+        const text = isPass 
+          ? `${player?.name ?? bid.player_id} passed`
+          : `${player?.name ?? bid.player_id} bid ${bid.points} ${bid.is_no_trump ? 'NT' : bid.suit}`
+        return { id: Date.now() + idx, text }
+      })
+
+      setToasts(prev => [...prev, ...newToasts])
+      
+      newToasts.forEach(t => {
+        setTimeout(() => {
+          setToasts(prev => prev.filter(toast => toast.id !== t.id))
+        }, 3000)
+      })
+    }
+    prevBidsLen.current = view.bids.length
+  }, [view.bids, view.seats])
 
   return (
     <main className="table" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 1000,
+        pointerEvents: 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem',
+        alignItems: 'center'
+      }}>
+        {toasts.map(toast => (
+          <div key={toast.id} style={{
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-glass-border)',
+            color: 'var(--color-accent)',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '20px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            fontFamily: 'var(--font-mono)',
+            fontWeight: 'bold',
+            fontSize: '1.1rem',
+            animation: 'slideInDown 0.3s ease-out',
+            whiteSpace: 'nowrap'
+          }}>
+            {toast.text}
+          </div>
+        ))}
+      </div>
       <header className="table-header">
         <div className="table-header-info">
           <span className="phase-title" style={{ margin: 0 }}>Mighty</span>
@@ -42,7 +105,10 @@ export function GameTable(props: GameTableProps) {
             </span>
           )}
         </div>
-        <button onClick={props.onLeave}>Leave Table</button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          {showTimer && <TurnTimer updatedAt={view.updatedAt} />}
+          <button onClick={props.onLeave}>Leave Table</button>
+        </div>
       </header>
 
       <div className="table-content">

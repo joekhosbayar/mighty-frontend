@@ -4,6 +4,7 @@ import { canCallJoker, legalPlays } from './rules'
 
 export interface SeatView {
   seat: number
+  playerId: string
   name: string | null
   isEmpty: boolean
   isMe: boolean
@@ -13,6 +14,8 @@ export interface SeatView {
   isConnected: boolean
   cardCount: number
   hasVotedPlayAgain: boolean
+  capturedPoints: Card[]
+  capturedCount: number
 }
 
 export interface HandCard {
@@ -37,6 +40,7 @@ export interface TableView {
   seats: SeatView[]
   hand: HandCard[]
   currentTrick: PlayedCard[]
+  leadSuit: Suit | null
   bids: Bid[]
   currentBid: Bid | null
   contract: Bid | null
@@ -46,8 +50,11 @@ export interface TableView {
   jokerCallCard: Card | null
   jokerLeadCard: Card | null
   scores: ScoreRow[]
+  scoreHistory: Record<string, number>[]
+  passedPlayers: Record<string, boolean>
   version: number
   config?: GameConfig
+  updatedAt: string
 }
 
 export function tableView(game: Game, myPlayerId: string): TableView {
@@ -80,20 +87,32 @@ export function tableView(game: Game, myPlayerId: string): TableView {
     mySeat,
     isMyTurn,
     amDeclarer,
-    seats: game.players.map((p, i) => ({
-      seat: i,
-      name: p?.name ?? null,
-      isEmpty: !p,
-      isMe: i === mySeat,
-      isTurn: active && i === game.current_turn,
-      isDeclarer: i === game.declarer,
-      isPartner: i === game.partner_seat,
-      isConnected: p?.is_connected ?? false,
-      cardCount: p?.hand?.length ?? 0,
-      hasVotedPlayAgain: game.play_again_votes?.[i] ?? false,
-    })),
+    seats: game.players.map((p, i) => {
+      const wonTricks = tricks.filter(t => t.winner === i)
+      const capturedCount = wonTricks.reduce((acc, t) => acc + t.cards.length, 0)
+      const capturedPoints = wonTricks
+        .flatMap(t => t.cards.map(pc => pc.card))
+        .filter(c => ['A', 'K', 'Q', 'J', '10'].includes(c.rank))
+
+      return {
+        seat: i,
+        playerId: p?.id ?? '',
+        name: p?.name ?? null,
+        isEmpty: !p,
+        isMe: i === mySeat,
+        isTurn: active && i === game.current_turn,
+        isDeclarer: i === game.declarer,
+        isPartner: i === game.partner_seat,
+        isConnected: p?.is_connected ?? false,
+        cardCount: p?.hand?.length ?? 0,
+        hasVotedPlayAgain: game.play_again_votes?.[i] ?? false,
+        capturedPoints,
+        capturedCount,
+      }
+    }),
     hand: sorted.map(card => ({ card, playable: playable.has(cardKey(card)) })),
     currentTrick: tricks[tricks.length - 1]?.cards ?? [],
+    leadSuit: tricks[tricks.length - 1]?.lead_suit ?? null,
     bids: game.bids ?? [],
     currentBid: game.current_bid,
     contract: game.contract,
@@ -108,12 +127,15 @@ export function tableView(game: Game, myPlayerId: string): TableView {
             playerId: p.id,
             name: p.name,
             roundScore: game.scores?.[p.id] ?? 0,
-            totalScore: game.total_scores?.[p.id] ?? (game.scores?.[p.id] ?? 0),
+            totalScore: game.total_scores?.[p.id] ?? 0,
             cardPoints: p.points?.length ?? 0,
           }]
         : [],
     ),
+    scoreHistory: game.score_history ?? [],
+    passedPlayers: game.passed_players ?? {},
     version: game.version,
     config: game.config,
+    updatedAt: game.updated_at ?? new Date().toISOString(),
   }
 }

@@ -5,6 +5,6 @@ import { useApp } from '../store/context'
 export function RequireAuth({ children }: { children: ReactNode }) {
   const token = useApp(s => s.token)
   const location = useLocation()
-  if (!token) return <Navigate to="/login" state={{ from: location }} replace />
+  if (!token) return <Navigate to="/" state={{ from: location }} replace />
   return <>{children}</>
 }

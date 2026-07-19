@@ -46,7 +46,7 @@ describe('ScoreBoard', () => {
     render(<ScoreBoard view={tableView(g, 'p2')} />)
     const row2 = screen.getByTestId('score-row-p2')
     expect(row2).toHaveTextContent('-5')
-    expect(within(row2).getByText('-5')).toHaveStyle({ color: 'var(--color-crimson)' })
+    expect(within(row2).getAllByText('-5')[0]).toHaveStyle({ color: 'var(--color-crimson)' })
     const row0 = screen.getByTestId('score-row-p0')
     expect(row0).toHaveTextContent('+20')
   })
