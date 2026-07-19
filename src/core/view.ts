@@ -12,6 +12,7 @@ export interface SeatView {
   isPartner: boolean
   isConnected: boolean
   cardCount: number
+  hasVotedPlayAgain: boolean
 }
 
 export interface HandCard {
@@ -23,6 +24,7 @@ export interface ScoreRow {
   playerId: string
   name: string
   roundScore: number
+  totalScore: number
   cardPoints: number
 }
 
@@ -88,6 +90,7 @@ export function tableView(game: Game, myPlayerId: string): TableView {
       isPartner: i === game.partner_seat,
       isConnected: p?.is_connected ?? false,
       cardCount: p?.hand?.length ?? 0,
+      hasVotedPlayAgain: game.play_again_votes?.[i] ?? false,
     })),
     hand: sorted.map(card => ({ card, playable: playable.has(cardKey(card)) })),
     currentTrick: tricks[tricks.length - 1]?.cards ?? [],
@@ -105,6 +108,7 @@ export function tableView(game: Game, myPlayerId: string): TableView {
             playerId: p.id,
             name: p.name,
             roundScore: game.scores?.[p.id] ?? 0,
+            totalScore: game.total_scores?.[p.id] ?? (game.scores?.[p.id] ?? 0),
             cardPoints: p.points?.length ?? 0,
           }]
         : [],
