@@ -26,7 +26,20 @@ export function ScoreBoard({ view }: { view: TableView }) {
             return (
               <tr key={row.playerId} data-testid={`score-row-${row.playerId}`}>
                 <td style={{ fontWeight: '600' }}>{row.name}</td>
-                <td style={{ fontFamily: 'var(--font-mono)', fontSize: '1.1rem' }}>{row.roundScore}</td>
+                <td
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '1.1rem',
+                    color:
+                      row.roundScore < 0
+                        ? 'var(--color-crimson)'
+                        : row.roundScore > 0
+                          ? '#2e7d32'
+                          : 'inherit',
+                  }}
+                >
+                  {row.roundScore > 0 ? `+${row.roundScore}` : row.roundScore}
+                </td>
                 <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)' }}>{row.cardPoints}</td>
                 <td style={{ color: roleColor, fontFamily: 'var(--font-mono)', fontSize: '0.85rem', textTransform: 'uppercase' }}>{role}</td>
               </tr>
