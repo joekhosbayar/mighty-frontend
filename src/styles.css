@@ -488,7 +488,7 @@ button:active:not(:disabled), .mock-button:active:not(:disabled) {
 
 .loser-friend-anim {
   display: inline-block;
-  animation: wobble 1s infinite ease-in-out;
+  animation: wobble 2s infinite ease-in-out;
   color: var(--color-crimson);
   font-weight: bold;
 }
