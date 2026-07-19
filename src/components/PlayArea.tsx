@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import type { Card, Suit } from '../core/types'
+import { useState, useRef, useEffect } from 'react'
+import type { Card, Suit, Bid } from '../core/types'
 import type { TableView } from '../core/view'
 import { sameCard } from '../core/cards'
 import { Hand } from './Hand'
@@ -16,6 +16,26 @@ const LEAD_SUITS: { suit: Suit; label: string }[] = [
   { suit: 'hearts', label: '♥' },
   { suit: 'spades', label: '♠' },
 ]
+
+function BidBubble({ seat, bids }: { seat: number, bids: Bid[] }) {
+  const myLastBid = bids.filter(b => b.player_idx === seat).pop();
+  const [bubble, setBubble] = useState<{ id: number, text: string } | null>(null);
+  const lastBidRef = useRef(myLastBid);
+
+  useEffect(() => {
+    if (myLastBid && myLastBid !== lastBidRef.current) {
+      lastBidRef.current = myLastBid;
+      const text = myLastBid.pass ? '🏳️ Pass' : `${myLastBid.points} ${myLastBid.is_no_trump ? 'NT' : myLastBid.suit}`;
+      setBubble({ id: Date.now(), text });
+      const timer = setTimeout(() => setBubble(null), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [myLastBid]);
+
+  if (!bubble) return null;
+  return <div key={bubble.id} className="anim-bubble">{bubble.text}</div>;
+}
+
 
 export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
   const [pendingCaller, setPendingCaller] = useState<Card | null>(null)
@@ -52,6 +72,7 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
               <div className={`seat-nameplate ${isTurn}`}>
                 {s.name ?? 'empty'}
               </div>
+              <BidBubble seat={s.seat} bids={view.bids} />
               {(s.isDeclarer || s.isPartner) && (
                 <div className="seat-role">{s.isDeclarer ? 'Declarer' : 'Partner'}</div>
               )}
