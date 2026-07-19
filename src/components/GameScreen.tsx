@@ -32,6 +32,8 @@ export function GameScreen() {
         } satisfies PlayCardPayload)
       }
       onLeave={() => navigate('/lobby')}
+      onPlayAgain={() => sendMove('play_again', null)}
+      onChangeConfig={(numPlayers) => sendMove('change_config', { num_players: numPlayers })}
     />
   )
 }

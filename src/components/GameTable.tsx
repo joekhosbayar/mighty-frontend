@@ -21,6 +21,8 @@ export interface GameTableProps {
   onNoFriend(): void
   onPlayCard(card: Card, callJoker: boolean, calledSuit?: Suit): void
   onLeave(): void
+  onPlayAgain?: () => void
+  onChangeConfig?: (numPlayers: number) => void
 }
 
 export function GameTable(props: GameTableProps) {
@@ -86,7 +88,7 @@ export function GameTable(props: GameTableProps) {
       {view.phase === 'exchanging' && <ExchangePanel view={view} onDiscard={props.onDiscard} />}
       {view.phase === 'calling' && <FriendCallPanel view={view} onCallPartner={props.onCallPartner} onNoFriend={props.onNoFriend} />}
       {view.phase === 'playing' && <PlayArea view={view} onPlayCard={props.onPlayCard} />}
-      {view.phase === 'finished' && <ScoreBoard view={view} />}
+      {view.phase === 'finished' && <ScoreBoard view={view} onPlayAgain={props.onPlayAgain} onChangeConfig={props.onChangeConfig} />}
 
       {(view.phase === 'bidding' || view.phase === 'calling') && view.hand.length > 0 && (
           <Hand cards={view.hand} mode="play" trump={view.trump} onCard={() => undefined} />
