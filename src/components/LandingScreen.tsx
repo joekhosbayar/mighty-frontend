@@ -45,6 +45,13 @@ export function LandingScreen() {
           <div><strong>Players 3, 4, 5:</strong> Pass — <em>4 consecutive passes ends the bidding!</em></div>
           <div><strong>Result:</strong> Player 2 is the Declarer with a contract of 5 ♦ (Target: 15 points).</div>
         </div>
+        <h2>The Exchanging Phase (The Kitty)</h2>
+        <p className="landing-text">
+          Once the bidding phase concludes, the winning bidder (the Declarer) receives 3 face-down cards from the center of the table known as the <strong>Kitty</strong>. 
+        </p>
+        <p className="landing-text" style={{ marginBottom: '2rem' }}>
+          The Declarer adds these cards to their hand, then secretly discards exactly 3 cards into their personal score pile. Any point cards discarded in this way are safely secured and count towards their team's score at the end of the game! This crucial phase allows the Declarer to perfectly sculpt their hand before calling a Friend.
+        </p>
 
         <h2>Card Play Restrictions</h2>
         <ul className="landing-restrictions">
