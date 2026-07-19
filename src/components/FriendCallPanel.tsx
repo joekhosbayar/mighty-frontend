@@ -27,12 +27,12 @@ export function FriendCallPanel({ view, onCallPartner, onNoFriend }: FriendCallP
       <h2 style={{ fontSize: '1.5rem', color: 'var(--color-accent)' }}>Call your friend</h2>
       <div style={{ display: 'flex', gap: '2rem', margin: '2rem 0', justifyContent: 'center' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-          <span className="label">Suit</span>
-          <SlotWheel options={SUITS} value={suit} onChange={setSuit} />
+          <span className="label" id="suit-label">Suit</span>
+          <SlotWheel options={SUITS} value={suit} onChange={setSuit} aria-label="Suit" />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-          <span className="label">Rank</span>
-          <SlotWheel options={RANKS} value={rank} onChange={setRank} disabled={isJoker} />
+          <span className="label" id="rank-label">Rank</span>
+          <SlotWheel options={RANKS} value={rank} onChange={setRank} disabled={isJoker} aria-label="Rank" />
         </div>
       </div>
       <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>

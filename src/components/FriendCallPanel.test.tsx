@@ -25,14 +25,15 @@ describe('FriendCallPanel', () => {
     const onCallPartner = vi.fn()
     render(<FriendCallPanel view={callingView()} onCallPartner={onCallPartner} onNoFriend={vi.fn()} />)
     
-    const wheels = screen.getAllByTestId('slot-wheel')
-    const suitWheel = wheels[0]
-    const rankWheel = wheels[1]
+    const suitWheel = screen.getByRole('listbox', { name: 'Suit' })
+    const rankWheel = screen.getByRole('listbox', { name: 'Rank' })
 
-    // diamonds is index 2
-    fireEvent.scroll(suitWheel, { target: { scrollTop: 40 * 2 } })
-    // K is index 1
-    fireEvent.scroll(rankWheel, { target: { scrollTop: 40 * 1 } })
+    // Use keyboard navigation to avoid hardcoding scroll offsets
+    // Suit starts at 'hearts' (idx 1). We want 'diamonds' (idx 2).
+    fireEvent.keyDown(suitWheel, { key: 'ArrowDown' })
+    
+    // Rank starts at 'A' (idx 0). We want 'K' (idx 1).
+    fireEvent.keyDown(rankWheel, { key: 'ArrowDown' })
 
     await userEvent.click(screen.getByRole('button', { name: 'Call K of diamonds' }))
     expect(onCallPartner).toHaveBeenCalledWith({ suit: 'diamonds', rank: 'K' })
@@ -42,9 +43,13 @@ describe('FriendCallPanel', () => {
     const onCallPartner = vi.fn()
     render(<FriendCallPanel view={callingView()} onCallPartner={onCallPartner} onNoFriend={vi.fn()} />)
     
-    const suitWheel = screen.getAllByTestId('slot-wheel')[0]
-    // none is index 4
-    fireEvent.scroll(suitWheel, { target: { scrollTop: 40 * 4 } })
+    const suitWheel = screen.getByRole('listbox', { name: 'Suit' })
+    
+    // Suit starts at 'hearts'. We want 'none' (Joker)
+    // 'hearts'(1) -> 'diamonds'(2) -> 'clubs'(3) -> 'none'(4)
+    fireEvent.keyDown(suitWheel, { key: 'ArrowDown' })
+    fireEvent.keyDown(suitWheel, { key: 'ArrowDown' })
+    fireEvent.keyDown(suitWheel, { key: 'ArrowDown' })
 
     await userEvent.click(screen.getByRole('button', { name: 'Call Joker' }))
     expect(onCallPartner).toHaveBeenCalledWith({ suit: 'none', rank: 'Joker' })

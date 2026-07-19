@@ -1,32 +1,55 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, KeyboardEvent } from 'react';
 
 interface SlotWheelProps<T extends string> {
   options: readonly T[];
   value: T;
   onChange: (val: T) => void;
   disabled?: boolean;
+  'aria-label'?: string;
+  itemHeight?: number;
 }
 
-export function SlotWheel<T extends string>({ options, value, onChange, disabled }: SlotWheelProps<T>) {
+export function SlotWheel<T extends string>({ options, value, onChange, disabled, 'aria-label': ariaLabel, itemHeight = 40 }: SlotWheelProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const ITEM_HEIGHT = 40;
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isInteracting = useRef(false);
 
   useEffect(() => {
-    if (containerRef.current) {
+    if (containerRef.current && !isInteracting.current) {
       const idx = options.indexOf(value);
       if (idx >= 0) {
-        containerRef.current.scrollTop = idx * ITEM_HEIGHT;
+        containerRef.current.scrollTop = idx * itemHeight;
       }
     }
-  }, [value, options]);
+  }, [value, options, itemHeight]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (disabled) return;
+    isInteracting.current = true;
     const target = e.currentTarget;
-    const scrollCenter = target.scrollTop + ITEM_HEIGHT / 2;
-    const idx = Math.max(0, Math.min(options.length - 1, Math.floor(scrollCenter / ITEM_HEIGHT)));
+    const scrollCenter = target.scrollTop + itemHeight / 2;
+    const idx = Math.max(0, Math.min(options.length - 1, Math.floor(scrollCenter / itemHeight)));
     if (options[idx] !== value) {
       onChange(options[idx]);
+    }
+    
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollTimeoutRef.current = setTimeout(() => {
+      isInteracting.current = false;
+    }, 150);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (disabled) return;
+    const idx = options.indexOf(value);
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (idx < options.length - 1) onChange(options[idx + 1]);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (idx > 0) onChange(options[idx - 1]);
     }
   };
 
@@ -34,8 +57,13 @@ export function SlotWheel<T extends string>({ options, value, onChange, disabled
     <div 
       ref={containerRef}
       onScroll={handleScroll}
+      onKeyDown={handleKeyDown}
+      tabIndex={disabled ? -1 : 0}
+      role="listbox"
+      aria-label={ariaLabel}
+      aria-activedescendant={value ? `slot-opt-${value}` : undefined}
       style={{
-        height: `${ITEM_HEIGHT * 3}px`,
+        height: `${itemHeight * 3}px`,
         overflowY: disabled ? 'hidden' : 'scroll',
         scrollSnapType: 'y mandatory',
         position: 'relative',
@@ -48,12 +76,15 @@ export function SlotWheel<T extends string>({ options, value, onChange, disabled
       className="slot-wheel"
       data-testid="slot-wheel"
     >
-      <div style={{ height: `${ITEM_HEIGHT}px` }} /> {/* Top padding */}
+      <div style={{ height: `${itemHeight}px` }} aria-hidden="true" />
       {options.map((opt) => (
         <div 
           key={opt}
+          id={`slot-opt-${opt}`}
+          role="option"
+          aria-selected={opt === value}
           style={{
-            height: `${ITEM_HEIGHT}px`,
+            height: `${itemHeight}px`,
             scrollSnapAlign: 'center',
             display: 'flex',
             alignItems: 'center',
@@ -66,7 +97,7 @@ export function SlotWheel<T extends string>({ options, value, onChange, disabled
           {opt}
         </div>
       ))}
-      <div style={{ height: `${ITEM_HEIGHT}px` }} /> {/* Bottom padding */}
+      <div style={{ height: `${itemHeight}px` }} aria-hidden="true" />
     </div>
   );
 }
