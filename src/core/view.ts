@@ -4,6 +4,7 @@ import { canCallJoker, legalPlays } from './rules'
 
 export interface SeatView {
   seat: number
+  playerId: string
   name: string | null
   isEmpty: boolean
   isMe: boolean
@@ -46,6 +47,7 @@ export interface TableView {
   jokerCallCard: Card | null
   jokerLeadCard: Card | null
   scores: ScoreRow[]
+  passedPlayers: Record<string, boolean>
   version: number
   config?: GameConfig
 }
@@ -82,6 +84,7 @@ export function tableView(game: Game, myPlayerId: string): TableView {
     amDeclarer,
     seats: game.players.map((p, i) => ({
       seat: i,
+      playerId: p?.id ?? '',
       name: p?.name ?? null,
       isEmpty: !p,
       isMe: i === mySeat,
@@ -113,6 +116,7 @@ export function tableView(game: Game, myPlayerId: string): TableView {
           }]
         : [],
     ),
+    passedPlayers: game.passed_players ?? {},
     version: game.version,
     config: game.config,
   }

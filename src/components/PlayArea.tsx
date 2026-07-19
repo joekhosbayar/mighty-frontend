@@ -17,20 +17,33 @@ const LEAD_SUITS: { suit: Suit; label: string }[] = [
   { suit: 'spades', label: '♠' },
 ]
 
-function BidBubble({ seat, bids }: { seat: number, bids: Bid[] }) {
-  const myLastBid = bids.filter(b => b.player_idx === seat).pop();
+function BidBubble({ playerId, bids, passedPlayers }: { playerId: string, bids: Bid[], passedPlayers: Record<string, boolean> }) {
+  const myLastBid = bids.filter(b => b.player_id === playerId).pop();
+  const isPassed = passedPlayers[playerId] || false;
+  const bidCount = bids.length;
+  
   const [bubble, setBubble] = useState<{ id: number, text: string } | null>(null);
-  const lastBidRef = useRef(myLastBid);
+  
+  const prevBidCountRef = useRef(bidCount);
+  const prevPassedRef = useRef(isPassed);
 
   useEffect(() => {
-    if (myLastBid && myLastBid !== lastBidRef.current) {
-      lastBidRef.current = myLastBid;
-      const text = myLastBid.pass ? '🏳️ Pass' : `${myLastBid.points} ${myLastBid.is_no_trump ? 'NT' : myLastBid.suit}`;
+    let text = null;
+    if (isPassed && !prevPassedRef.current) {
+      text = '🏳️ Pass';
+    } else if (myLastBid && bidCount > prevBidCountRef.current) {
+      text = `${myLastBid.points} ${myLastBid.is_no_trump ? 'NT' : myLastBid.suit}`;
+    }
+    
+    prevBidCountRef.current = bidCount;
+    prevPassedRef.current = isPassed;
+
+    if (text) {
       setBubble({ id: Date.now(), text });
       const timer = setTimeout(() => setBubble(null), 1500);
       return () => clearTimeout(timer);
     }
-  }, [myLastBid]);
+  }, [myLastBid, isPassed, bidCount]);
 
   if (!bubble) return null;
   return <div key={bubble.id} className="anim-bubble">{bubble.text}</div>;
@@ -72,7 +85,7 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
               <div className={`seat-nameplate ${isTurn}`}>
                 {s.name ?? 'empty'}
               </div>
-              <BidBubble seat={s.seat} bids={view.bids} />
+              <BidBubble playerId={s.playerId} bids={view.bids} passedPlayers={view.passedPlayers} />
               {(s.isDeclarer || s.isPartner) && (
                 <div className="seat-role">{s.isDeclarer ? 'Declarer' : 'Partner'}</div>
               )}
