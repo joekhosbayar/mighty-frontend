@@ -3,7 +3,7 @@ import type { Game } from '../core/types'
 import type { Http } from '../api/http'
 import { ApiError } from '../api/http'
 import { createAppStore, type Deps, type SocketLike } from './index'
-import { baseGame } from '../core/testing/builders'
+import { baseGame, player } from '../core/testing/builders'
 
 const TOKEN = `h.${btoa(JSON.stringify({ user_id: 'u1', username: 'alice' }))}.s`
 
@@ -105,6 +105,55 @@ describe('app store', () => {
     await store.getState().refreshLobby()
     expect(store.getState().screen).toEqual({ name: 'auth' })
     expect(store.getState().token).toBeNull()
+  })
+
+  it('login/createGame/joinGame report success to the caller', async () => {
+    const { deps } = makeDeps()
+    const store = createAppStore(deps)
+    expect(await store.getState().login('alice', 'pw')).toBe(true)
+    expect(await store.getState().createGame()).toBe('g7')
+    expect(await store.getState().joinGame('gA')).toBe(true)
+  })
+
+  it('resumeGame connects when the caller is a participant', async () => {
+    const { deps, sockets } = makeDeps({
+      getGame: vi.fn(async id => baseGame({ id, players: [player(0, { id: 'u1' }), player(1), player(2), player(3), player(4)] })),
+    })
+    const store = createAppStore(deps)
+    await store.getState().login('alice', 'pw')
+    expect(await store.getState().resumeGame('g1')).toEqual({ ok: true })
+    expect(store.getState().game?.id).toBe('g1')
+    expect(sockets).toHaveLength(1)
+    expect(sockets[0].socket.connect).toHaveBeenCalled()
+  })
+
+  it('resumeGame rejects a non-participant as unavailable', async () => {
+    const { deps } = makeDeps() // default getGame players are p0..p4, not u1
+    const store = createAppStore(deps)
+    await store.getState().login('alice', 'pw')
+    expect(await store.getState().resumeGame('g1')).toEqual({ ok: false, reason: 'unavailable' })
+    expect(store.getState().lastError).toBe('That game is no longer available')
+    expect(store.getState().game).toBeNull()
+  })
+
+  it('resumeGame rejects a finished game with the ended message', async () => {
+    const { deps } = makeDeps({
+      getGame: vi.fn(async id => baseGame({ id, status: 'finished', players: [player(0, { id: 'u1' }), player(1), player(2), player(3), player(4)] })),
+    })
+    const store = createAppStore(deps)
+    await store.getState().login('alice', 'pw')
+    expect(await store.getState().resumeGame('g1')).toEqual({ ok: false, reason: 'finished' })
+    expect(store.getState().lastError).toBe('Game has ended')
+  })
+
+  it('resumeGame is a no-op when already connected to that game', async () => {
+    const { deps, sockets, http } = makeDeps()
+    const store = createAppStore(deps)
+    await store.getState().login('alice', 'pw')
+    await store.getState().createGame() // sets game g7, opens one socket
+    expect(await store.getState().resumeGame('g7')).toEqual({ ok: true })
+    expect(sockets).toHaveLength(1) // no second socket
+    expect(http.getGame).not.toHaveBeenCalled()
   })
 })
 

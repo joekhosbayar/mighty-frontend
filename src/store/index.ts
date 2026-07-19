@@ -17,6 +17,8 @@ export interface Deps {
   storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 }
 
+export type ResumeResult = { ok: true } | { ok: false; reason: 'finished' | 'unavailable' }
+
 export interface AppState {
   token: string | null
   userId: string | null
@@ -26,12 +28,13 @@ export interface AppState {
   game: Game | null
   connection: ConnectionStatus
   lastError: string | null
-  signup(u: string, p: string, email: string): Promise<void>
-  login(u: string, p: string): Promise<void>
+  signup(u: string, p: string, email: string): Promise<boolean>
+  login(u: string, p: string): Promise<boolean>
   logout(): void
   refreshLobby(): Promise<void>
-  createGame(): Promise<void>
-  joinGame(gameId: string): Promise<void>
+  createGame(): Promise<string | null>
+  joinGame(gameId: string): Promise<boolean>
+  resumeGame(gameId: string): Promise<ResumeResult>
   sendMove(t: MoveType, payload: unknown): void
   leaveTable(): void
 }
@@ -95,9 +98,10 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
       async signup(u, p, email) {
         try {
           await deps.http.signup(u, p, email)
-          await get().login(u, p)
+          return await get().login(u, p)
         } catch (e) {
           set({ lastError: errorMessage(e) })
+          return false
         }
       },
 
@@ -106,8 +110,10 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
           const token = await deps.http.login(u, p)
           deps.storage.setItem(TOKEN_KEY, token)
           set({ token, ...decodeToken(token), screen: { name: 'lobby' }, lastError: null })
+          return true
         } catch (e) {
           set({ lastError: errorMessage(e) })
+          return false
         }
       },
 
@@ -133,17 +139,44 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
 
       async createGame() {
         try {
-          enterGame(await deps.http.createGame(get().token ?? ''))
+          const g = await deps.http.createGame(get().token ?? '')
+          enterGame(g)
+          return g.id
         } catch (e) {
           fail(e)
+          return null
         }
       },
 
       async joinGame(gameId) {
         try {
           enterGame(await deps.http.joinGame(get().token ?? '', gameId))
+          return true
         } catch (e) {
           fail(e)
+          return false
+        }
+      },
+
+      async resumeGame(gameId) {
+        if (get().game?.id === gameId) return { ok: true }
+        try {
+          const g = await deps.http.getGame(gameId)
+          if (g.status === 'finished') {
+            set({ lastError: 'Game has ended' })
+            return { ok: false, reason: 'finished' }
+          }
+          if (!g.players.some(p => p?.id === get().userId)) {
+            set({ lastError: 'That game is no longer available' })
+            return { ok: false, reason: 'unavailable' }
+          }
+          set({ game: g, lastError: null })
+          openSocket(gameId)
+          return { ok: true }
+        } catch (e) {
+          if (e instanceof ApiError && e.status === 401) get().logout()
+          set({ lastError: 'That game is no longer available' })
+          return { ok: false, reason: 'unavailable' }
         }
       },
 
