@@ -3,8 +3,9 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { renderApp } from './test-utils'
 import { makeTestDeps, myGame, TEST_TOKEN } from '../core/testing/deps'
+import { type Http } from '../api/http'
 
-function authedDeps(getGameImpl: Parameters<typeof makeTestDeps>[0]['getGame']) {
+function authedDeps(getGameImpl: Http['getGame']) {
   const built = makeTestDeps({ getGame: getGameImpl })
   built.storage.set('mighty.token', TEST_TOKEN)
   return built

@@ -1,4 +1,4 @@
-import { Navigate, type RouteObject } from 'react-router'
+import { type RouteObject } from 'react-router'
 import { AuthRedirect } from './AuthRedirect'
 import { RequireAuth } from './RequireAuth'
 import { LoginRoute } from './LoginRoute'

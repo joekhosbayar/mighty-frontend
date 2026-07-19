@@ -3,7 +3,6 @@ import type { Game, MoveType } from '../core/types'
 import { ApiError, createHttp, decodeToken, type Http } from '../api/http'
 import { GameSocket, type ConnectionStatus, type GameSocketCallbacks } from '../api/ws'
 
-export type AppScreen = { name: 'auth' } | { name: 'lobby' } | { name: 'table'; gameId: string }
 
 export interface SocketLike {
   connect(): void
@@ -23,7 +22,6 @@ export interface AppState {
   token: string | null
   userId: string | null
   username: string | null
-  screen: AppScreen
   lobbyGames: Game[]
   game: Game | null
   connection: ConnectionStatus
@@ -78,7 +76,7 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
     }
 
     const enterGame = (g: Game) => {
-      set({ game: g, screen: { name: 'table', gameId: g.id }, lastError: null })
+      set({ game: g, lastError: null })
       openSocket(g.id)
     }
 
@@ -89,7 +87,6 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
 
     return {
       ...session,
-      screen: saved ? ({ name: 'lobby' } as const) : ({ name: 'auth' } as const),
       lobbyGames: [],
       game: null,
       connection: 'idle',
@@ -109,7 +106,7 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
         try {
           const token = await deps.http.login(u, p)
           deps.storage.setItem(TOKEN_KEY, token)
-          set({ token, ...decodeToken(token), screen: { name: 'lobby' }, lastError: null })
+          set({ token, ...decodeToken(token), lastError: null })
           return true
         } catch (e) {
           set({ lastError: errorMessage(e) })
@@ -124,8 +121,7 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
         busyRetried = false
         deps.storage.removeItem(TOKEN_KEY)
         set({
-          token: null, userId: null, username: null,
-          screen: { name: 'auth' }, game: null, connection: 'idle',
+          token: null, userId: null, username: null, game: null, connection: 'idle',
         })
       },
 
@@ -191,7 +187,7 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
         socket = null
         lastMove = null
         busyRetried = false
-        set({ screen: { name: 'lobby' }, game: null, connection: 'idle' })
+        set({ game: null, connection: 'idle' })
       },
     }
   })
