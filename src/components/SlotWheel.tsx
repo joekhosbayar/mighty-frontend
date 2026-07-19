@@ -7,9 +7,10 @@ interface SlotWheelProps<T extends string> {
   disabled?: boolean;
   'aria-label'?: string;
   itemHeight?: number;
+  formatOption?: (opt: T) => React.ReactNode;
 }
 
-export function SlotWheel<T extends string>({ options, value, onChange, disabled, 'aria-label': ariaLabel, itemHeight = 40 }: SlotWheelProps<T>) {
+export function SlotWheel<T extends string>({ options, value, onChange, disabled, 'aria-label': ariaLabel, itemHeight = 40, formatOption }: SlotWheelProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInteracting = useRef(false);
@@ -101,9 +102,10 @@ export function SlotWheel<T extends string>({ options, value, onChange, disabled
             fontSize: opt === value ? '1.2rem' : '1rem',
             fontWeight: opt === value ? 'bold' : 'normal',
             color: opt === value ? 'var(--color-ink)' : 'var(--color-text-secondary)',
+            textTransform: formatOption ? 'none' : 'capitalize'
           }}
         >
-          {opt}
+          {formatOption ? formatOption(opt) : opt}
         </div>
       ))}
       <div style={{ height: `${itemHeight}px` }} aria-hidden="true" />

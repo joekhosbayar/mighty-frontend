@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Card, Rank, Suit } from '../core/types'
 import type { TableView } from '../core/view'
 import { SlotWheel } from './SlotWheel'
+import { PhysicalCard } from './PhysicalCard'
 
 export interface FriendCallPanelProps {
   view: TableView
@@ -12,6 +13,15 @@ export interface FriendCallPanelProps {
 const SUITS: Suit[] = ['spades', 'hearts', 'diamonds', 'clubs', 'none']
 const RANKS: Rank[] = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2']
 
+function formatSuit(s: Suit): React.ReactNode {
+  if (s === 'none') return 'Joker'
+  if (s === 'spades') return <span className="suit-spades">♠ Spades</span>
+  if (s === 'hearts') return <span className="suit-hearts">♥ Hearts</span>
+  if (s === 'diamonds') return <span className="suit-diamonds">♦ Diamonds</span>
+  if (s === 'clubs') return <span className="suit-clubs">♣ Clubs</span>
+  return s
+}
+
 export function FriendCallPanel({ view, onCallPartner, onNoFriend }: FriendCallPanelProps) {
   const [suit, setSuit] = useState<Suit>('hearts')
   const [rank, setRank] = useState<Rank>('A')
@@ -21,22 +31,36 @@ export function FriendCallPanel({ view, onCallPartner, onNoFriend }: FriendCallP
   }
 
   const isJoker = suit === 'none';
+  const previewCard: Card = isJoker ? { suit: 'none', rank: 'Joker' } : { suit, rank };
+  const trump = view.contract?.suit || 'none';
 
   return (
     <section className="friend-call panel" style={{ maxWidth: '600px', margin: '0 auto' }}>
       <h2 style={{ fontSize: '1.5rem', color: 'var(--color-accent)' }}>Call your friend</h2>
-      <div style={{ display: 'flex', gap: '2rem', margin: '2rem 0', justifyContent: 'center' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-          <span className="label" id="suit-label">Suit</span>
-          <SlotWheel options={SUITS} value={suit} onChange={setSuit} aria-label="Suit" />
+      <div style={{ display: 'flex', gap: '3rem', margin: '2rem 0', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+        
+        {/* Wheels */}
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+            <span className="label" id="suit-label">Suit</span>
+            <SlotWheel options={SUITS} value={suit} onChange={setSuit} formatOption={formatSuit} aria-label="Suit" />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+            <span className="label" id="rank-label">Rank</span>
+            <SlotWheel options={RANKS} value={rank} onChange={setRank} disabled={isJoker} aria-label="Rank" />
+          </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-          <span className="label" id="rank-label">Rank</span>
-          <SlotWheel options={RANKS} value={rank} onChange={setRank} disabled={isJoker} aria-label="Rank" />
+
+        {/* Card Preview */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '1.5rem', background: 'var(--color-glass)', borderRadius: '12px' }}>
+          <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', fontWeight: 'bold' }}>PREVIEW</span>
+          <PhysicalCard card={previewCard} trump={trump} />
         </div>
+
       </div>
+
       <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <button onClick={() => onCallPartner(isJoker ? { suit: 'none', rank: 'Joker' } : { suit, rank })} style={{ background: 'var(--color-accent)', color: 'var(--color-ink)' }}>
+        <button onClick={() => onCallPartner(previewCard)} style={{ background: 'var(--color-accent)', color: 'var(--color-ink)' }}>
           {isJoker ? 'Call Joker' : `Call ${rank} of ${suit}`}
         </button>
         <span style={{ color: 'var(--color-text-secondary)' }}>or</span>
