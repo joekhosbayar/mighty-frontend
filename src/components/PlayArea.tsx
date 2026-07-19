@@ -40,12 +40,17 @@ function BidBubble({ playerId, bids, passedPlayers }: { playerId: string, bids: 
 
     if (text) {
       setBubble({ id: Date.now(), text });
-      const timer = setTimeout(() => setBubble(null), 1500);
-      return () => clearTimeout(timer);
     } else if (!isPassed && !myLastBid) {
       setBubble(null);
     }
   }, [myLastBid, isPassed, prevBidHash]);
+
+  useEffect(() => {
+    if (bubble) {
+      const timer = setTimeout(() => setBubble(null), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [bubble]);
 
   if (!bubble) return null;
   return <div key={bubble.id} className="anim-bubble">{bubble.text}</div>;
