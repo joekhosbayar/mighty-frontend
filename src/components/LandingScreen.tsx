@@ -33,6 +33,19 @@ export function LandingScreen() {
           Multipliers (×2) stack for special achievements: running the table (taking all 20 points), back-runs by the defenders, No-Trump contracts, and playing completely alone without a friend.
         </p>
 
+        <h2>Example Bidding Phase</h2>
+        <div className="landing-tutorial">
+          <div><strong>Player 1:</strong> Pass</div>
+          <div><strong>Player 2:</strong> 3 ♠ (Target: 13 points) — <em>Opens the bidding with the minimum target of 3.</em></div>
+          <div><strong>Player 3:</strong> 4 ♣ (Target: 14 points) — <em>Must bid a higher target, or a higher suit at the same target.</em></div>
+          <div><strong>Player 4:</strong> 4 ♥ (Target: 14 points) — <em>Same target as Player 3, but Hearts outranks Clubs.</em></div>
+          <div><strong>Player 5:</strong> 4 No-Trump (Target: 14 points) — <em>No-Trump is the highest ranking "suit".</em></div>
+          <div><strong>Player 1:</strong> Pass</div>
+          <div><strong>Player 2:</strong> 5 ♦ (Target: 15 points) — <em>Raises the target to 5.</em></div>
+          <div><strong>Players 3, 4, 5:</strong> Pass — <em>4 consecutive passes ends the bidding!</em></div>
+          <div><strong>Result:</strong> Player 2 is the Declarer with a contract of 5 ♦ (Target: 15 points).</div>
+        </div>
+
         <h2>Card Play Restrictions</h2>
         <ul className="landing-restrictions">
           <li><strong>First Trick (Leading):</strong> You cannot lead the Joker or the Mighty. You cannot lead a Trump card unless you only hold Trump and special cards.</li>
