@@ -14,6 +14,8 @@ export interface SeatView {
   isConnected: boolean
   cardCount: number
   hasVotedPlayAgain: boolean
+  capturedPoints: Card[]
+  capturedCount: number
 }
 
 export interface HandCard {
@@ -82,19 +84,29 @@ export function tableView(game: Game, myPlayerId: string): TableView {
     mySeat,
     isMyTurn,
     amDeclarer,
-    seats: game.players.map((p, i) => ({
-      seat: i,
-      playerId: p?.id ?? '',
-      name: p?.name ?? null,
-      isEmpty: !p,
-      isMe: i === mySeat,
-      isTurn: active && i === game.current_turn,
-      isDeclarer: i === game.declarer,
-      isPartner: i === game.partner_seat,
-      isConnected: p?.is_connected ?? false,
-      cardCount: p?.hand?.length ?? 0,
-      hasVotedPlayAgain: game.play_again_votes?.[i] ?? false,
-    })),
+    seats: game.players.map((p, i) => {
+      const wonTricks = tricks.filter(t => t.winner === i)
+      const capturedCount = wonTricks.reduce((acc, t) => acc + t.cards.length, 0)
+      const capturedPoints = wonTricks
+        .flatMap(t => t.cards.map(pc => pc.card))
+        .filter(c => ['A', 'K', 'Q', 'J', '10'].includes(c.rank))
+
+      return {
+        seat: i,
+        playerId: p?.id ?? '',
+        name: p?.name ?? null,
+        isEmpty: !p,
+        isMe: i === mySeat,
+        isTurn: active && i === game.current_turn,
+        isDeclarer: i === game.declarer,
+        isPartner: i === game.partner_seat,
+        isConnected: p?.is_connected ?? false,
+        cardCount: p?.hand?.length ?? 0,
+        hasVotedPlayAgain: game.play_again_votes?.[i] ?? false,
+        capturedPoints,
+        capturedCount,
+      }
+    }),
     hand: sorted.map(card => ({ card, playable: playable.has(cardKey(card)) })),
     currentTrick: tricks[tricks.length - 1]?.cards ?? [],
     bids: game.bids ?? [],

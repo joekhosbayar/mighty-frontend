@@ -96,6 +96,27 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
               {(s.isDeclarer || s.isPartner) && (
                 <div className="seat-role">{s.isDeclarer ? 'Declarer' : 'Partner'}</div>
               )}
+              
+              {/* Captured Cards / Discard Pile */}
+              {s.capturedCount > 0 && (
+                <div key={`captured-${s.capturedCount}`} className="seat-captured captured-animate" style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: '0.5rem', display: 'flex', gap: '0.2rem', zIndex: 10 }}>
+                  {(s.isDeclarer || s.isPartner) ? (
+                    // Declarer/Teammate: single face-down stack
+                    <div className="card-physical card-back" style={{ transform: 'scale(0.5)', transformOrigin: 'top center' }}>
+                      <div style={{ position: 'absolute', bottom: '-20px', left: '0', right: '0', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                        {s.capturedCount}
+                      </div>
+                    </div>
+                  ) : (
+                    // Defender: fan of face-up point cards
+                    s.capturedPoints.map((c, ci) => (
+                      <div key={`${c.suit}-${c.rank}`} style={{ transform: 'scale(0.4)', transformOrigin: 'top center', marginLeft: ci > 0 ? '-30px' : '0' }}>
+                        <PhysicalCard card={c} trump={view.trump} />
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           )
         })}

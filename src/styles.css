@@ -198,6 +198,16 @@ button:disabled {
   color: var(--color-crimson);
 }
 
+.card-back {
+  background: repeating-linear-gradient(45deg, var(--color-accent) 0, var(--color-accent) 10px, transparent 10px, transparent 20px), var(--color-glass);
+  border: 1px solid var(--color-glass-border);
+}
+
+.card-rank {
+  font-size: 1.2rem;
+  margin-top: 2px;
+}
+
 .card-suit {
   font-size: 1.2rem;
   margin-top: 2px;
@@ -451,3 +461,17 @@ button:active:not(:disabled), .mock-button:active:not(:disabled) {
   margin-top: 0;
 }
 
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.captured-animate {
+  animation: slideInDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
