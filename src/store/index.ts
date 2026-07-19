@@ -32,7 +32,7 @@ export interface AppState {
   refreshLobby(): Promise<void>
   createGame(): Promise<string | null>
   joinGame(gameId: string): Promise<boolean>
-  resumeGame(gameId: string): Promise<ResumeResult>
+  resumeGame(gameId: string, signal?: AbortSignal): Promise<ResumeResult>
   sendMove(t: MoveType, payload: unknown): void
   leaveTable(): void
 }
@@ -154,10 +154,11 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
         }
       },
 
-      async resumeGame(gameId) {
+      async resumeGame(gameId, signal) {
         if (get().game?.id === gameId) return { ok: true }
         try {
           const g = await deps.http.getGame(gameId)
+          if (signal?.aborted) return { ok: false, reason: 'unavailable' }
           if (g.status === 'finished') {
             set({ lastError: 'Game has ended' })
             return { ok: false, reason: 'finished' }

@@ -12,12 +12,14 @@ export function GameRoute() {
 
   // Resume (or confirm we are already connected) whenever the game id changes.
   useEffect(() => {
+    const ac = new AbortController()
     let cancelled = false
-    void resumeGame(id).then(r => {
+    void resumeGame(id, ac.signal).then(r => {
       if (!cancelled && !r.ok) navigate('/lobby', { replace: true })
     })
     return () => {
       cancelled = true
+      ac.abort()
     }
   }, [id, resumeGame, navigate])
 
