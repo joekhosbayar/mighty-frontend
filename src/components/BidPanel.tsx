@@ -27,54 +27,14 @@ export function BidPanel({ view, onBid, onPass }: BidPanelProps) {
   // Use state but initialize with the calculated starting points, and add effect to sync
   const [points, setPoints] = useState(startingPoints)
   
-  // Track new bids for pop-up toasts
-  const [toast, setToast] = useState<{ id: number, text: string } | null>(null)
-  
   useEffect(() => {
     setPoints(startingPoints);
   }, [startingPoints]);
 
-  useEffect(() => {
-    if (view.bids.length > 0) {
-      const latestBid = view.bids[view.bids.length - 1];
-      const player = view.seats.find(s => s.playerId === latestBid.player_id);
-      const text = `${player?.name ?? latestBid.player_id} bid ${latestBid.points} ${latestBid.is_no_trump ? 'NT' : latestBid.suit}`;
-      const id = Date.now();
-      setToast({ id, text });
-      
-      const timer = setTimeout(() => {
-        setToast(current => current?.id === id ? null : current);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [view.bids.length, view.bids, view.seats]);
-
   const candidate = (suit: Suit): BidInput => ({ points, suit, is_no_trump: suit === 'none' })
 
   return (
-    <>
-      {toast && (
-        <div style={{
-          position: 'fixed',
-          top: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'var(--color-surface)',
-          border: '1px solid var(--color-glass-border)',
-          color: 'var(--color-accent)',
-          padding: '1rem 2rem',
-          borderRadius: '20px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-          zIndex: 1000,
-          fontFamily: 'var(--font-mono)',
-          fontWeight: 'bold',
-          fontSize: '1.2rem',
-          animation: 'slideInDown 0.3s ease-out'
-        }}>
-          {toast.text}
-        </div>
-      )}
-      <section className="bid-panel panel" style={{ maxWidth: '600px', margin: '0 auto' }}>
+    <section className="bid-panel panel" style={{ maxWidth: '600px', margin: '0 auto' }}>
       <h2 style={{ fontSize: '1.5rem', color: 'var(--color-accent)' }}>Bidding</h2>
       <ol data-testid="bid-history" style={{ listStyle: 'none', padding: 0, margin: '1rem 0', fontFamily: 'var(--font-mono)' }}>
         {view.bids.map((b, i) => (
@@ -106,6 +66,5 @@ export function BidPanel({ view, onBid, onPass }: BidPanelProps) {
         </div>
       </div>
     </section>
-    </>
   )
 }
