@@ -28,8 +28,8 @@ export function BidPanel({ view, onBid, onPass }: BidPanelProps) {
   const [points, setPoints] = useState(startingPoints)
   
   useEffect(() => {
-    setPoints(Math.min(10, Math.max(minBid, highestCurrentPoints + 1)));
-  }, [minBid, highestCurrentPoints]);
+    setPoints(startingPoints);
+  }, [startingPoints]);
 
   const candidate = (suit: Suit): BidInput => ({ points, suit, is_no_trump: suit === 'none' })
 
