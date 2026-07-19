@@ -1,4 +1,5 @@
 import type { TableView } from '../core/view'
+import { ScoreGraph } from './ScoreGraph'
 
 export function ScoreBoard({ 
   view, 
@@ -72,6 +73,8 @@ export function ScoreBoard({
           })}
         </tbody>
       </table>
+
+      <ScoreGraph view={view} />
 
       <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
         <button 

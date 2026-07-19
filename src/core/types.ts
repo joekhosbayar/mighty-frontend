@@ -70,6 +70,7 @@ export interface Game {
   tricks: Trick[] | null
   scores: Record<string, number> | null
   total_scores?: Record<string, number>
+  score_history?: Record<string, number>[]
   play_again_votes?: Record<number, boolean>
   version: number
   created_at: string

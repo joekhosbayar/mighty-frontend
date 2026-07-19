@@ -50,6 +50,7 @@ export interface TableView {
   jokerCallCard: Card | null
   jokerLeadCard: Card | null
   scores: ScoreRow[]
+  scoreHistory: Record<string, number>[]
   passedPlayers: Record<string, boolean>
   version: number
   config?: GameConfig
@@ -131,6 +132,7 @@ export function tableView(game: Game, myPlayerId: string): TableView {
           }]
         : [],
     ),
+    scoreHistory: game.score_history ?? [],
     passedPlayers: game.passed_players ?? {},
     version: game.version,
     config: game.config,
