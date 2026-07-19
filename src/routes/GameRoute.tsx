@@ -22,7 +22,7 @@ export function GameRoute() {
   }, [id, resumeGame, navigate])
 
   // Tear the socket down when we actually leave the game route.
-  useEffect(() => () => leaveTable(), [leaveTable])
+  useEffect(() => { return () => { leaveTable() }; }, [leaveTable, id])
 
   // Confirm before abandoning a game that is in progress.
   const active = status === 'bidding' || status === 'playing'
