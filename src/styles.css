@@ -304,17 +304,16 @@ th {
   font-weight: 400;
 }
 
-/* Add to end of src/styles.css */
-button {
+button, .mock-button {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-button:hover:not(:disabled) {
+button:hover:not(:disabled), .mock-button:hover:not(:disabled) {
   transform: translateY(-2px) scale(1.02);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-button:active:not(:disabled) {
+button:active:not(:disabled), .mock-button:active:not(:disabled) {
   transform: translateY(0) scale(0.98);
 }
 
