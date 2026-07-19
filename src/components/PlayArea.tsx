@@ -137,12 +137,39 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
 
         <div className="trick-area">
           {view.currentTrick.map((pc, i) => {
+            const isJokerLead = i === 0 && pc.card.rank === 'Joker'
+            const calledSuitObj = LEAD_SUITS.find(s => s.suit === view.leadSuit)
+            const suitColor = (view.leadSuit === 'hearts' || view.leadSuit === 'diamonds') ? 'var(--color-crimson)' : 'var(--color-ink)'
+
             return (
               <div 
                 key={`trick-${pc.seat}-${i}`} 
                 data-testid={`trick-card-${pc.seat}`}
-                style={{ zIndex: i }}
+                style={{ zIndex: i, position: 'relative' }}
               >
+                {isJokerLead && calledSuitObj && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '-25px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: 'var(--color-surface)',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontSize: '0.85rem',
+                    fontWeight: 'bold',
+                    border: '1px solid var(--color-glass-border)',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    whiteSpace: 'nowrap',
+                    zIndex: 10,
+                    color: 'var(--color-text-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    Called: <span style={{ color: suitColor, fontSize: '1rem' }}>{calledSuitObj.label}</span>
+                  </div>
+                )}
                 <PhysicalCard card={pc.card} trump={view.trump} />
               </div>
             )

@@ -40,6 +40,7 @@ export interface TableView {
   seats: SeatView[]
   hand: HandCard[]
   currentTrick: PlayedCard[]
+  leadSuit: Suit | null
   bids: Bid[]
   currentBid: Bid | null
   contract: Bid | null
@@ -52,6 +53,7 @@ export interface TableView {
   passedPlayers: Record<string, boolean>
   version: number
   config?: GameConfig
+  updatedAt: string
 }
 
 export function tableView(game: Game, myPlayerId: string): TableView {
@@ -109,6 +111,7 @@ export function tableView(game: Game, myPlayerId: string): TableView {
     }),
     hand: sorted.map(card => ({ card, playable: playable.has(cardKey(card)) })),
     currentTrick: tricks[tricks.length - 1]?.cards ?? [],
+    leadSuit: tricks[tricks.length - 1]?.lead_suit ?? null,
     bids: game.bids ?? [],
     currentBid: game.current_bid,
     contract: game.contract,
@@ -123,7 +126,7 @@ export function tableView(game: Game, myPlayerId: string): TableView {
             playerId: p.id,
             name: p.name,
             roundScore: game.scores?.[p.id] ?? 0,
-            totalScore: game.total_scores?.[p.id] ?? (game.scores?.[p.id] ?? 0),
+            totalScore: game.total_scores?.[p.id] ?? 0,
             cardPoints: p.points?.length ?? 0,
           }]
         : [],
@@ -131,5 +134,6 @@ export function tableView(game: Game, myPlayerId: string): TableView {
     passedPlayers: game.passed_players ?? {},
     version: game.version,
     config: game.config,
+    updatedAt: game.updated_at ?? new Date().toISOString(),
   }
 }
