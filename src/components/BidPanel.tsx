@@ -18,7 +18,7 @@ const SUIT_OPTIONS: { suit: Suit; label: string }[] = [
 ]
 
 export function BidPanel({ view, onBid, onPass }: BidPanelProps) {
-  const minBid = view.config?.num_players === 4 ? 14 : 13
+  const minBid = view.config?.num_players === 4 ? 4 : 3
   const [points, setPoints] = useState(minBid)
   const candidate = (suit: Suit): BidInput => ({ points, suit, is_no_trump: suit === 'none' })
 
@@ -34,7 +34,7 @@ export function BidPanel({ view, onBid, onPass }: BidPanelProps) {
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontFamily: 'var(--font-mono)' }}>
           Tricks:
           <select value={points} onChange={e => setPoints(Number(e.target.value))}>
-            {Array.from({ length: 20 - minBid + 1 }, (_, i) => i + minBid).map(n => (
+            {Array.from({ length: 10 - minBid + 1 }, (_, i) => i + minBid).map(n => (
               <option key={n} value={n}>{n}</option>
             ))}
           </select>
