@@ -1,4 +1,4 @@
-import { useEffect, useRef, KeyboardEvent } from 'react';
+import { useEffect, useRef, KeyboardEvent, useId } from 'react';
 
 interface SlotWheelProps<T extends string> {
   options: readonly T[];
@@ -13,6 +13,15 @@ export function SlotWheel<T extends string>({ options, value, onChange, disabled
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInteracting = useRef(false);
+  const idPrefix = useId();
+
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (containerRef.current && !isInteracting.current) {
@@ -61,7 +70,7 @@ export function SlotWheel<T extends string>({ options, value, onChange, disabled
       tabIndex={disabled ? -1 : 0}
       role="listbox"
       aria-label={ariaLabel}
-      aria-activedescendant={value ? `slot-opt-${value}` : undefined}
+      aria-activedescendant={value ? `${idPrefix}-opt-${value}` : undefined}
       style={{
         height: `${itemHeight * 3}px`,
         overflowY: disabled ? 'hidden' : 'scroll',
@@ -80,7 +89,7 @@ export function SlotWheel<T extends string>({ options, value, onChange, disabled
       {options.map((opt) => (
         <div 
           key={opt}
-          id={`slot-opt-${opt}`}
+          id={`${idPrefix}-opt-${opt}`}
           role="option"
           aria-selected={opt === value}
           style={{

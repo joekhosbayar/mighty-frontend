@@ -28,12 +28,12 @@ describe('FriendCallPanel', () => {
     const suitWheel = screen.getByRole('listbox', { name: 'Suit' })
     const rankWheel = screen.getByRole('listbox', { name: 'Rank' })
 
-    // Use keyboard navigation to avoid hardcoding scroll offsets
+    // Use scroll events to test the scroll handler logic
     // Suit starts at 'hearts' (idx 1). We want 'diamonds' (idx 2).
-    fireEvent.keyDown(suitWheel, { key: 'ArrowDown' })
+    fireEvent.scroll(suitWheel, { target: { scrollTop: 80 } })
     
     // Rank starts at 'A' (idx 0). We want 'K' (idx 1).
-    fireEvent.keyDown(rankWheel, { key: 'ArrowDown' })
+    fireEvent.scroll(rankWheel, { target: { scrollTop: 40 } })
 
     await userEvent.click(screen.getByRole('button', { name: 'Call K of diamonds' }))
     expect(onCallPartner).toHaveBeenCalledWith({ suit: 'diamonds', rank: 'K' })
@@ -46,10 +46,8 @@ describe('FriendCallPanel', () => {
     const suitWheel = screen.getByRole('listbox', { name: 'Suit' })
     
     // Suit starts at 'hearts'. We want 'none' (Joker)
-    // 'hearts'(1) -> 'diamonds'(2) -> 'clubs'(3) -> 'none'(4)
-    fireEvent.keyDown(suitWheel, { key: 'ArrowDown' })
-    fireEvent.keyDown(suitWheel, { key: 'ArrowDown' })
-    fireEvent.keyDown(suitWheel, { key: 'ArrowDown' })
+    // 'hearts'(1) -> 'none'(4)
+    fireEvent.scroll(suitWheel, { target: { scrollTop: 160 } })
 
     await userEvent.click(screen.getByRole('button', { name: 'Call Joker' }))
     expect(onCallPartner).toHaveBeenCalledWith({ suit: 'none', rank: 'Joker' })
