@@ -20,22 +20,21 @@ const LEAD_SUITS: { suit: Suit; label: string }[] = [
 function BidBubble({ playerId, bids, passedPlayers }: { playerId: string, bids: Bid[], passedPlayers: Record<string, boolean> }) {
   const myLastBid = bids.filter(b => b.player_id === playerId).pop();
   const isPassed = passedPlayers[playerId] || false;
-  const bidCount = bids.length;
   
   const [bubble, setBubble] = useState<{ id: number, text: string } | null>(null);
   
-  const prevBidCountRef = useRef(bidCount);
+  const prevBidRef = useRef(myLastBid);
   const prevPassedRef = useRef(isPassed);
 
   useEffect(() => {
     let text = null;
     if (isPassed && !prevPassedRef.current) {
       text = '🏳️ Pass';
-    } else if (myLastBid && bidCount > prevBidCountRef.current) {
+    } else if (myLastBid && myLastBid !== prevBidRef.current) {
       text = `${myLastBid.points} ${myLastBid.is_no_trump ? 'NT' : myLastBid.suit}`;
     }
     
-    prevBidCountRef.current = bidCount;
+    prevBidRef.current = myLastBid;
     prevPassedRef.current = isPassed;
 
     if (text) {
@@ -43,7 +42,7 @@ function BidBubble({ playerId, bids, passedPlayers }: { playerId: string, bids: 
       const timer = setTimeout(() => setBubble(null), 1500);
       return () => clearTimeout(timer);
     }
-  }, [myLastBid, isPassed, bidCount]);
+  }, [myLastBid, isPassed]);
 
   if (!bubble) return null;
   return <div key={bubble.id} className="anim-bubble">{bubble.text}</div>;
