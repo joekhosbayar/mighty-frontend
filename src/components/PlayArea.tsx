@@ -103,7 +103,7 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
                   {(s.isDeclarer || s.isPartner) ? (
                     // Declarer/Teammate: single face-down stack
                     <div className="card-physical card-back" style={{ transform: 'scale(0.5)', transformOrigin: 'top center' }}>
-                      <div style={{ position: 'absolute', bottom: '-20px', left: '0', right: '0', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                      <div style={{ position: 'absolute', bottom: '-40px', left: '0', right: '0', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: '1.5rem', fontWeight: 'bold' }}>
                         {s.capturedCount}
                       </div>
                     </div>
