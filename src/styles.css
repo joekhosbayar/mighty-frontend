@@ -38,15 +38,14 @@ h1, h2, h3, .phase-title {
 }
 
 button {
-  font-family: var(--font-body);
-  font-weight: 500;
-  cursor: pointer;
   background: var(--color-glass);
   border: 1px solid var(--color-glass-border);
   color: var(--color-text-primary);
   padding: 0.5rem 1rem;
   border-radius: 4px;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 button:hover:not(:disabled) {
@@ -59,6 +58,10 @@ button:disabled {
   opacity: 0.4;
 }
 
+:root {
+  interpolate-size: allow-keywords;
+}
+
 /* Glass Panels */
 .panel {
   background: var(--color-glass);
@@ -67,6 +70,7 @@ button:disabled {
   padding: 1.5rem;
   border-radius: 8px;
   margin-bottom: 1rem;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 /* Table Header */
@@ -77,6 +81,12 @@ button:disabled {
   padding: 1rem 2rem;
   border-bottom: 1px solid var(--color-glass-border);
   background: rgba(0, 0, 0, 0.2);
+}
+
+td {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--color-glass-border);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .table-header-info {
