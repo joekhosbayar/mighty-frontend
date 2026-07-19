@@ -32,6 +32,20 @@ export function LandingScreen() {
         <p className="landing-text">
           Multipliers (×2) stack for special achievements: running the table (taking all 20 points), back-runs by the defenders, No-Trump contracts, and playing completely alone without a friend.
         </p>
+
+        <h2>10-Trick Tutorial (Example Game)</h2>
+        <div className="landing-tutorial">
+          <div><strong>1. The First Lead:</strong> The Declarer leads. Trump cannot be led. The Mighty cannot be played (unless void in the led suit). The Joker loses its power.</div>
+          <div><strong>2. Following Suit:</strong> Players must follow the led suit. Highest card wins. Point cards (A, K, Q, J, 10) won are captured by the trick winner.</div>
+          <div><strong>3. Trumping:</strong> A player who is void in the led suit plays a Trump card. Trumps beat any off-suit cards, regardless of rank.</div>
+          <div><strong>4. The Friend Revealed:</strong> A player plays the Declarer's "Called Card". Their identity is now known, and the two explicitly work together to capture points.</div>
+          <div><strong>5. Sloughing Points:</strong> A player who is void in the led suit throws an off-suit point card to their partner, who is currently winning the trick.</div>
+          <div><strong>6. The Joker Caller (Ripper):</strong> A player leads the Joker Caller (♣3). The player holding the Joker is now forced to play it!</div>
+          <div><strong>7. The Mighty's Defense:</strong> The Joker was forced out, but that player ALSO holds the Mighty! They play the Mighty instead, saving their Joker and winning the trick.</div>
+          <div><strong>8. The Joker's Revenge:</strong> The Joker is finally played. It beats everything except the Mighty. Since the Mighty was already played, the Joker is guaranteed to win.</div>
+          <div><strong>9. Drawing Trumps:</strong> The Declarer leads high Trumps to exhaust the opponents' remaining trumps, ensuring their off-suit winners are safe.</div>
+          <div><strong>10. The Final Trick:</strong> The Joker loses all its power again! Any remaining point cards are heavily contested as the final trick resolves.</div>
+        </div>
       </div>
 
       {/* Right Pane */}

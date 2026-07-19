@@ -394,6 +394,15 @@ button:active:not(:disabled), .mock-button:active:not(:disabled) {
   line-height: 1.6;
 }
 
+.landing-tutorial {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding-bottom: 2rem;
+}
+
 .landing-right-pane {
   flex: 1;
   padding: 2rem;
