@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { ApiError, createHttp, decodeToken } from './http'
+import { ApiError, createHttp } from './http'
 
 function fakeFetch(status: number, body: unknown) {
   return vi.fn(async () =>
@@ -8,16 +8,6 @@ function fakeFetch(status: number, body: unknown) {
 }
 
 describe('createHttp', () => {
-  it('logs in and returns the token', async () => {
-    const f = fakeFetch(200, { token: 'abc' })
-    const http = createHttp(f)
-    await expect(http.login('alice', 'pw')).resolves.toBe('abc')
-    expect(f).toHaveBeenCalledWith('/auth/login', expect.objectContaining({
-      method: 'POST',
-      body: JSON.stringify({ username: 'alice', password: 'pw' }),
-    }))
-  })
-
   it('sends the bearer token on game creation', async () => {
     const f = fakeFetch(200, { id: 'g1' })
     await createHttp(f).createGame('tok')
@@ -48,14 +38,14 @@ describe('createHttp', () => {
   })
 
   it('throws ApiError with status and server text on failure', async () => {
-    const http = createHttp(fakeFetch(401, 'invalid credentials\n'))
-    const err = await http.login('a', 'b').then(
+    const http = createHttp(fakeFetch(401, 'invalid token\n'))
+    const err = await http.listGames().then(
       () => null,
       e => e as ApiError,
     )
     expect(err).toBeInstanceOf(ApiError)
     expect(err?.status).toBe(401)
-    expect(err?.message).toBe('invalid credentials')
+    expect(err?.message).toBe('invalid token')
   })
 
   it('prefixes an absolute base when given', async () => {
@@ -65,9 +55,3 @@ describe('createHttp', () => {
   })
 })
 
-describe('decodeToken', () => {
-  it('extracts user_id and username from the JWT payload', () => {
-    const payload = btoa(JSON.stringify({ user_id: 'u-1', username: 'alice' }))
-    expect(decodeToken(`head.${payload}.sig`)).toEqual({ userId: 'u-1', username: 'alice' })
-  })
-})

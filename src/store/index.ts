@@ -1,7 +1,8 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { Game, GameConfig, MoveType } from '../core/types'
-import { ApiError, createHttp, decodeToken, type Http } from '../api/http'
+import { ApiError, createHttp, type Http } from '../api/http'
 import { GameSocket, type ConnectionStatus, type GameSocketCallbacks } from '../api/ws'
+import { signIn, signUp, signOut, fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth'
 
 
 export interface SocketLike {
@@ -13,7 +14,6 @@ export interface SocketLike {
 export interface Deps {
   http: Http
   makeSocket(gameId: string, token: string, cb: GameSocketCallbacks): SocketLike
-  storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 }
 
 export type ResumeResult = { ok: true } | { ok: false; reason: 'finished' | 'unavailable' }
@@ -29,6 +29,7 @@ export interface AppState {
   signup(u: string, p: string, email: string): Promise<boolean>
   login(u: string, p: string): Promise<boolean>
   logout(): void
+  initSession(): Promise<void>
   refreshLobby(): Promise<void>
   createGame(config?: GameConfig): Promise<string | null>
   joinGame(gameId: string): Promise<boolean>
@@ -37,7 +38,6 @@ export interface AppState {
   leaveTable(): void
 }
 
-const TOKEN_KEY = 'mighty.token'
 
 function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : String(e)
@@ -80,49 +80,57 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
       openSocket(g.id)
     }
 
-    const saved = deps.storage.getItem(TOKEN_KEY)
-    const session = saved
-      ? { token: saved, ...decodeToken(saved) }
-      : { token: null, userId: null, username: null }
-
     return {
-      ...session,
+      token: null,
+      userId: null,
+      username: null,
       lobbyGames: [],
       game: null,
       connection: 'idle',
       lastError: null,
 
+      async initSession() {
+        try {
+          const session = await fetchAuthSession()
+          const attrs = await fetchUserAttributes()
+          const token = session.tokens?.accessToken?.toString() ?? null
+          set({ token, userId: attrs.sub ?? null, username: attrs.preferred_username ?? null, lastError: null })
+        } catch (e) {
+          set({ token: null, userId: null, username: null })
+        }
+      },
+
       async signup(u, p, email) {
         try {
-          await deps.http.signup(u, p, email)
-          return await get().login(u, p)
+          await signUp({ username: u, password: p, options: { userAttributes: { email, preferred_username: u } } });
+          return true; // We don't auto-login here because they need to confirm
         } catch (e) {
-          set({ lastError: errorMessage(e) })
-          return false
+          set({ lastError: errorMessage(e) });
+          return false;
         }
       },
 
       async login(u, p) {
         try {
-          const token = await deps.http.login(u, p)
-          deps.storage.setItem(TOKEN_KEY, token)
-          set({ token, ...decodeToken(token), lastError: null })
-          return true
+          await signIn({ username: u, password: p, options: { authFlowType: 'USER_AUTH' } });
+          const session = await fetchAuthSession();
+          const attrs = await fetchUserAttributes();
+          const token = session.tokens?.accessToken?.toString() ?? null;
+          set({ token, userId: attrs.sub ?? null, username: attrs.preferred_username ?? u, lastError: null });
+          return true;
         } catch (e) {
-          set({ lastError: errorMessage(e) })
-          return false
+          set({ lastError: errorMessage(e) });
+          return false;
         }
       },
 
       logout() {
-        socket?.close()
-        socket = null
-        lastMove = null
-        busyRetried = false
-        deps.storage.removeItem(TOKEN_KEY)
-        set({
-          token: null, userId: null, username: null, game: null, connection: 'idle',
-        })
+        socket?.close();
+        socket = null;
+        lastMove = null;
+        busyRetried = false;
+        signOut().catch(console.error);
+        set({ token: null, userId: null, username: null, game: null, connection: 'idle' });
       },
 
       async refreshLobby() {
@@ -194,23 +202,6 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
   })
 }
 
-function defaultStorage(): Deps['storage'] {
-  try {
-    const s = window.localStorage
-    if (s) {
-      s.getItem('mighty.probe')
-      return s
-    }
-  } catch {
-    // Storage disabled (private mode, sandbox) — fall through to memory.
-  }
-  const mem = new Map<string, string>()
-  return {
-    getItem: k => mem.get(k) ?? null,
-    setItem: (k, v) => void mem.set(k, v),
-    removeItem: k => void mem.delete(k),
-  }
-}
 
 let defaultStore: StoreApi<AppState> | null = null
 
@@ -221,7 +212,6 @@ export function appStore(): StoreApi<AppState> {
       http,
       makeSocket: (gameId, token, callbacks) =>
         new GameSocket({ gameId, token, callbacks, fetchGame: id => http.getGame(id) }),
-      storage: defaultStorage(),
     })
   }
   return defaultStore

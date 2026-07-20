@@ -5,13 +5,19 @@ import { ApiError } from '../api/http'
 import { createAppStore, type Deps, type SocketLike } from './index'
 import { baseGame, player } from '../core/testing/builders'
 
+vi.mock('aws-amplify/auth', () => ({
+  signIn: vi.fn(async () => {}),
+  signUp: vi.fn(async () => {}),
+  signOut: vi.fn(async () => {}),
+  fetchAuthSession: vi.fn(async () => ({ tokens: { accessToken: { toString: () => `h.${btoa(JSON.stringify({ user_id: 'u1', username: 'alice' }))}.s` } } })),
+  fetchUserAttributes: vi.fn(async () => ({ sub: 'u1', preferred_username: 'alice' })),
+}))
+
 const TOKEN = `h.${btoa(JSON.stringify({ user_id: 'u1', username: 'alice' }))}.s`
 
 function makeDeps(over: Partial<Http> = {}) {
   const sockets: Array<{ gameId: string; cb: Parameters<Deps['makeSocket']>[2]; socket: SocketLike }> = []
   const http: Http = {
-    signup: vi.fn(async () => ({ id: 'u1', username: 'alice', email: 'a@b.c' })),
-    login: vi.fn(async () => TOKEN),
     createGame: vi.fn(async () => baseGame({ id: 'g7', status: 'waiting' })),
     joinGame: vi.fn(async (_t, id) => baseGame({ id })),
     listGames: vi.fn(async () => [baseGame({ id: 'gA', status: 'waiting' })] as Game[]),
@@ -26,42 +32,37 @@ function makeDeps(over: Partial<Http> = {}) {
       sockets.push({ gameId, cb, socket })
       return socket
     },
-    storage: {
-      getItem: k => storage.get(k) ?? null,
-      setItem: (k, v) => void storage.set(k, v),
-      removeItem: k => void storage.delete(k),
-    },
   }
-  return { deps, http, sockets, storage }
+  return { deps, http, sockets }
 }
 
 describe('app store', () => {
-  it('restores the session from a saved token', () => {
-    const { deps, storage } = makeDeps()
-    expect(createAppStore(deps).getState().token).toBeNull()
-    storage.set('mighty.token', TOKEN)
-    const restored = createAppStore(deps)
-    expect(restored.getState().token).toBe(TOKEN)
-    expect(restored.getState().userId).toBe('u1')
+  it('restores the session via initSession', async () => {
+    const { deps } = makeDeps()
+    const store = createAppStore(deps)
+    expect(store.getState().token).toBeNull()
+    await store.getState().initSession()
+    expect(store.getState().token).toBe(TOKEN)
+    expect(store.getState().userId).toBe('u1')
   })
 
   it('login stores the session', async () => {
-    const { deps, storage } = makeDeps()
+    const { deps } = makeDeps()
     const store = createAppStore(deps)
     await store.getState().login('alice', 'pw')
     expect(store.getState()).toMatchObject({ token: TOKEN, userId: 'u1', username: 'alice' })
-    expect(storage.get('mighty.token')).toBe(TOKEN)
   })
 
   it('signup then auto-login', async () => {
-    const { deps, http } = makeDeps()
+    const { deps } = makeDeps()
     const store = createAppStore(deps)
     expect(await store.getState().signup('alice', 'pw', 'a@b.c')).toBe(true)
-    expect(http.signup).toHaveBeenCalled()
   })
 
   it('login failure surfaces the error', async () => {
-    const { deps } = makeDeps({ login: vi.fn(async () => { throw new ApiError(401, 'invalid credentials') }) })
+    const { signIn } = await import('aws-amplify/auth')
+    vi.mocked(signIn).mockRejectedValueOnce(new Error('invalid credentials'))
+    const { deps } = makeDeps()
     const store = createAppStore(deps)
     expect(await store.getState().login('alice', 'bad')).toBe(false)
     expect(store.getState().lastError).toBe('invalid credentials')

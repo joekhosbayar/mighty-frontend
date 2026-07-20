@@ -13,24 +13,21 @@ describe('routing shell', () => {
   })
 
   it('redirects an authenticated user away from /login to the lobby', async () => {
-    const { deps, storage } = makeTestDeps()
-    storage.set('mighty.token', TEST_TOKEN)
-    renderApp(deps, ['/login'])
+    const { deps } = makeTestDeps()
+    renderApp(deps, ['/login'], { token: TEST_TOKEN, userId: 'u1', username: 'alice' })
     expect(await screen.findByText('Open Tables')).toBeInTheDocument()
   })
 
   it('creating a table navigates to its game URL', async () => {
-    const { deps, storage } = makeTestDeps()
-    storage.set('mighty.token', TEST_TOKEN)
-    const { router } = renderApp(deps, ['/lobby'])
+    const { deps } = makeTestDeps()
+    const { router } = renderApp(deps, ['/lobby'], { token: TEST_TOKEN, userId: 'u1', username: 'alice' })
     await userEvent.click(await screen.findByRole('button', { name: 'Create Table' }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/games/g7'))
   })
 
   it('joining a table navigates to its game URL', async () => {
-    const { deps, storage } = makeTestDeps()
-    storage.set('mighty.token', TEST_TOKEN)
-    const { router } = renderApp(deps, ['/lobby'])
+    const { deps } = makeTestDeps()
+    const { router } = renderApp(deps, ['/lobby'], { token: TEST_TOKEN, userId: 'u1', username: 'alice' })
     await userEvent.click(await screen.findByRole('button', { name: 'Join Table' }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/games/gA'))
   })

@@ -10,15 +10,7 @@ export class ApiError extends Error {
   }
 }
 
-export interface SignupResult {
-  id: string
-  username: string
-  email: string
-}
-
 export interface Http {
-  signup(username: string, password: string, email: string): Promise<SignupResult>
-  login(username: string, password: string): Promise<string>
   createGame(token: string, config?: GameConfig): Promise<Game>
   joinGame(token: string, gameId: string): Promise<Game>
   listGames(): Promise<Game[]>
@@ -44,9 +36,6 @@ export function createHttp(fetchFn: typeof fetch = fetch, base = ''): Http {
   })
 
   return {
-    signup: (username, password, email) => request('/auth/signup', post({ username, password, email })),
-    login: async (username, password) =>
-      (await request<{ token: string }>('/auth/login', post({ username, password }))).token,
     createGame: (token, config) => request('/games', post(config ?? {}, token)),
     joinGame: (token, gameId) => request(`/games/${gameId}/join`, post({}, token)),
     listGames: () => request('/games?status=waiting', undefined),
@@ -54,8 +43,3 @@ export function createHttp(fetchFn: typeof fetch = fetch, base = ''): Http {
   }
 }
 
-export function decodeToken(token: string): { userId: string; username: string } {
-  const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-  const payload = JSON.parse(atob(b64)) as { user_id: string; username: string }
-  return { userId: payload.user_id, username: payload.username }
-}
