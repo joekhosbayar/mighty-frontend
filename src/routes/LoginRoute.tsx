@@ -25,7 +25,11 @@ export function LoginRoute() {
         return res
       }}
       onLoginSuccess={async () => {
-        await store.getState().initSession()
+        // login() already populated the store on the direct-DONE path; only the
+        // confirmSignIn/MFA completion path leaves the token unset and needs a fetch.
+        if (!store.getState().token) {
+          await store.getState().initSession()
+        }
         if (store.getState().token) {
           navigate(from, { replace: true })
         }

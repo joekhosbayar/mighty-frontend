@@ -51,4 +51,19 @@ describe('LoginRoute', () => {
       }),
     )
   })
+
+  it('fetches user attributes only once on a direct login (no redundant GetUser)', async () => {
+    const { fetchUserAttributes } = await import('aws-amplify/auth')
+    vi.mocked(fetchUserAttributes).mockClear()
+    const { deps } = makeTestDeps()
+    renderApp(deps, ['/login'])
+
+    await userEvent.type(screen.getByLabelText('Email'), 'alice@x.io')
+    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
+
+    await screen.findByText('Open Tables')
+    // login() populates the store once; onLoginSuccess must not re-fetch when the token is already set.
+    expect(fetchUserAttributes).toHaveBeenCalledTimes(1)
+  })
 })
