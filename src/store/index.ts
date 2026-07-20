@@ -112,7 +112,11 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
 
       async login(u, p) {
         try {
-          const res = await signIn({ username: u, password: p, options: { authFlowType: 'USER_AUTH' } });
+          // Preferring PASSWORD_SRP makes Amplify submit credentials via SRP in a
+        // single round-trip (no plaintext password, no SELECT_CHALLENGE dance),
+        // returning DONE directly for non-MFA users. Without it, USER_AUTH does
+        // first-factor discovery and stalls waiting for a factor selection.
+        const res = await signIn({ username: u, password: p, options: { authFlowType: 'USER_AUTH', preferredChallenge: 'PASSWORD_SRP' } });
           if (res.nextStep.signInStep === 'DONE') {
             const session = await fetchAuthSession();
             const attrs = await fetchUserAttributes();

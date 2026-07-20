@@ -1,12 +1,13 @@
 import { Navigate, useLocation, useNavigate } from 'react-router'
 import { AuthScreen } from '../components/AuthScreen'
-import { useApp } from '../store/context'
+import { useApp, useAppStore } from '../store/context'
 
 export function LoginRoute() {
   const token = useApp(s => s.token)
   const lastError = useApp(s => s.lastError)
   const login = useApp(s => s.login)
   const signup = useApp(s => s.signup)
+  const store = useAppStore()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/lobby'
@@ -24,8 +25,8 @@ export function LoginRoute() {
         return res
       }}
       onLoginSuccess={async () => {
-        await useApp.getState().initSession()
-        if (useApp.getState().token) {
+        await store.getState().initSession()
+        if (store.getState().token) {
           navigate(from, { replace: true })
         }
       }}

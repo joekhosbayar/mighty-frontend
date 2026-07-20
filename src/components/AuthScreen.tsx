@@ -19,7 +19,7 @@ export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScr
   const [confirmError, setConfirmError] = useState<string | null>(null)
   const [confirmMessage, setConfirmMessage] = useState<string | null>(null)
 
-  const processSignInStep = async (res: boolean | SignInOutput) => {
+  const processSignInStep = async (res: boolean | SignInOutput, pwd: string = password) => {
     if (res === true) {
       onLoginSuccess()
       return
@@ -43,9 +43,9 @@ export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScr
         return
       }
     }
-    if (typeof res !== 'boolean' && res?.nextStep?.signInStep === 'CONTINUE_SIGN_IN_WITH_PASSWORD') {
+    if (typeof res !== 'boolean' && res?.nextStep?.signInStep === 'CONFIRM_SIGN_IN_WITH_PASSWORD') {
       try {
-        res = await confirmSignIn({ challengeResponse: password })
+        res = await confirmSignIn({ challengeResponse: pwd })
       } catch (err: unknown) {
         setConfirmError(err instanceof Error && err.message ? err.message : 'Failed to verify password')
         return
@@ -68,7 +68,7 @@ export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScr
       } catch (err: unknown) {
         setConfirmError(err instanceof Error && err.message ? err.message : 'Failed to setup TOTP')
       }
-    } else if (typeof res !== 'boolean' && res?.nextStep?.signInStep === 'CONTINUE_SIGN_IN_WITH_SOFTWARE_TOKEN_MFA') {
+    } else if (typeof res !== 'boolean' && res?.nextStep?.signInStep === 'CONFIRM_SIGN_IN_WITH_TOTP_CODE') {
       setMode('mfa_confirm')
       setCode('')
     } else if (typeof res !== 'boolean' && res?.nextStep?.signInStep === 'DONE') {
@@ -144,7 +144,7 @@ export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScr
       setConfirmMessage(null)
       await confirmResetPassword({ username: email, confirmationCode: code, newPassword })
       const res = await onLogin(email, newPassword)
-      await processSignInStep(res)
+      await processSignInStep(res, newPassword)
     } catch (err: unknown) {
       setConfirmError(err instanceof Error && err.message ? err.message : 'Failed to reset password')
     }

@@ -53,6 +53,20 @@ describe('app store', () => {
     expect(store.getState()).toMatchObject({ token: TOKEN, userId: 'u1', username: 'alice' })
   })
 
+  it('login uses USER_AUTH with a preferred SRP password challenge (one-shot, no factor-selection stall)', async () => {
+    const { signIn } = await import('aws-amplify/auth')
+    const { deps } = makeDeps()
+    const store = createAppStore(deps)
+    await store.getState().login('alice', 'pw')
+    expect(signIn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        username: 'alice',
+        password: 'pw',
+        options: expect.objectContaining({ authFlowType: 'USER_AUTH', preferredChallenge: 'PASSWORD_SRP' }),
+      }),
+    )
+  })
+
   it('signup then auto-login', async () => {
     const { deps } = makeDeps()
     const store = createAppStore(deps)

@@ -66,6 +66,32 @@ describe('AuthScreen', () => {
     })
   })
 
+  it('resets the password and logs in with the NEW password, not the stale login field', async () => {
+    vi.mocked(amplifyAuth.resetPassword).mockResolvedValue({} as never)
+    vi.mocked(amplifyAuth.confirmResetPassword).mockResolvedValue(undefined as never)
+    vi.mocked(amplifyAuth.confirmSignIn).mockResolvedValue({ nextStep: { signInStep: 'DONE' } } as never)
+    // After confirmResetPassword, AuthScreen auto-logs-in; if the flow returns
+    // the password challenge (Amplify v6 step CONFIRM_SIGN_IN_WITH_PASSWORD), it
+    // must be answered with the brand-new password the user just set.
+    const onLogin = vi.fn().mockResolvedValue({ nextStep: { signInStep: 'CONFIRM_SIGN_IN_WITH_PASSWORD' } })
+
+    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
+    await userEvent.type(screen.getByLabelText('Email'), 'dana@x.io')
+    await userEvent.click(screen.getByRole('button', { name: 'Send Reset Code' }))
+
+    await userEvent.type(await screen.findByLabelText('Verification Code'), '654321')
+    await userEvent.type(screen.getByLabelText('New Password'), 'NewPass123')
+    await userEvent.click(screen.getByRole('button', { name: 'Reset Password' }))
+
+    await waitFor(() => {
+      expect(onLogin).toHaveBeenCalledWith('dana@x.io', 'NewPass123')
+    })
+    // The password-challenge answer must be the new password — not the empty login field.
+    expect(amplifyAuth.confirmSignIn).toHaveBeenCalledWith({ challengeResponse: 'NewPass123' })
+  })
+
   it('resends verification code', async () => {
     const onSignup = vi.fn().mockResolvedValue(true)
     render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
@@ -231,7 +257,7 @@ describe('AuthScreen', () => {
 
   it('transitions to software token MFA and confirms', async () => {
     const onLogin = vi.fn().mockResolvedValue({
-      nextStep: { signInStep: 'CONTINUE_SIGN_IN_WITH_SOFTWARE_TOKEN_MFA' }
+      nextStep: { signInStep: 'CONFIRM_SIGN_IN_WITH_TOTP_CODE' }
     })
     const onLoginSuccess = vi.fn()
 

@@ -13,3 +13,8 @@ export function useApp<T>(selector: (s: AppState) => T): T {
   const store = useContext(StoreContext) ?? appStore()
   return useStore(store, selector)
 }
+
+/** Imperative handle to the active store (for reading/calling state outside render). */
+export function useAppStore(): StoreApi<AppState> {
+  return useContext(StoreContext) ?? appStore()
+}
