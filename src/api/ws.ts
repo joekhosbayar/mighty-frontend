@@ -1,5 +1,6 @@
 import type { Game, MoveType } from '../core/types'
 import { parseServerMessage } from '../core/types'
+import { fetchAuthSession } from 'aws-amplify/auth'
 
 export type ConnectionStatus = 'idle' | 'connecting' | 'open' | 'reconnecting' | 'closed'
 
@@ -19,7 +20,6 @@ export interface GameSocketCallbacks {
 
 export interface GameSocketOptions {
   gameId: string
-  token: string
   callbacks: GameSocketCallbacks
   wsFactory?: (path: string) => WebSocketLike
   fetchGame?: (gameId: string) => Promise<Game>
@@ -42,9 +42,20 @@ export class GameSocket {
     this.opts = opts
   }
 
-  connect(): void {
-    const { gameId, token, callbacks } = this.opts
+  async connect(): Promise<void> {
+    const { gameId, callbacks } = this.opts
     callbacks.onStatus(this.retries === 0 ? 'connecting' : 'reconnecting')
+
+    let token = ''
+    try {
+      const session = await fetchAuthSession()
+      token = session.tokens?.accessToken?.toString() ?? ''
+    } catch (e) {
+      console.warn('Failed to fetch auth session before connecting WS', e)
+    }
+
+    if (this.closed) return
+
     const ws = (this.opts.wsFactory ?? browserWsFactory)(`/games/${gameId}/ws`)
     this.ws = ws
     ws.onopen = () => {
@@ -68,7 +79,7 @@ export class GameSocket {
       this.retries += 1
       callbacks.onStatus('reconnecting')
       setTimeout(() => {
-        if (!this.closed) this.connect()
+        if (!this.closed) void this.connect()
       }, delay)
     }
   }

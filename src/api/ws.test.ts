@@ -1,6 +1,11 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { WebSocketLike } from './ws'
 import { GameSocket } from './ws'
+import { fetchAuthSession } from 'aws-amplify/auth'
+
+vi.mock('aws-amplify/auth', () => ({
+  fetchAuthSession: vi.fn(),
+}))
 
 class FakeWS implements WebSocketLike {
   sent: string[] = []
@@ -18,7 +23,6 @@ function makeSocket(overrides: { fetchGame?: (id: string) => Promise<never> } = 
   const callbacks = { onGame: vi.fn(), onError: vi.fn(), onStatus: vi.fn() }
   const socket = new GameSocket({
     gameId: 'g1',
-    token: 'tok',
     callbacks,
     wsFactory: () => ws,
     ...overrides,
@@ -29,18 +33,22 @@ function makeSocket(overrides: { fetchGame?: (id: string) => Promise<never> } = 
 const gameV = (version: number) => ({ id: 'g1', status: 'bidding', version })
 
 describe('GameSocket', () => {
-  it('sends AUTH as the first frame on open', () => {
+  beforeEach(() => {
+    vi.mocked(fetchAuthSession).mockResolvedValue({ tokens: { accessToken: 'tok' } } as any)
+  })
+
+  it('sends AUTH as the first frame on open', async () => {
     const { ws, socket, callbacks } = makeSocket()
-    socket.connect()
+    await socket.connect()
     expect(callbacks.onStatus).toHaveBeenCalledWith('connecting')
     ws.open()
     expect(JSON.parse(ws.sent[0])).toEqual({ type: 'AUTH', token: 'tok' })
     expect(callbacks.onStatus).toHaveBeenCalledWith('open')
   })
 
-  it('emits game broadcasts and error frames to the right callbacks', () => {
+  it('emits game broadcasts and error frames to the right callbacks', async () => {
     const { ws, socket, callbacks } = makeSocket()
-    socket.connect()
+    await socket.connect()
     ws.open()
     ws.receive(gameV(5))
     expect(callbacks.onGame).toHaveBeenCalledWith(expect.objectContaining({ version: 5 }))
@@ -48,9 +56,9 @@ describe('GameSocket', () => {
     expect(callbacks.onError).toHaveBeenCalledWith('not your turn')
   })
 
-  it('tags moves with the last seen version', () => {
+  it('tags moves with the last seen version', async () => {
     const { ws, socket } = makeSocket()
-    socket.connect()
+    await socket.connect()
     ws.open()
     ws.receive(gameV(9))
     socket.sendMove('pass', null)
@@ -58,9 +66,9 @@ describe('GameSocket', () => {
     expect(frame).toEqual({ type: 'MOVE', move_type: 'pass', payload: null, client_version: 9 })
   })
 
-  it('reports closed when the user closes', () => {
+  it('reports closed when the user closes', async () => {
     const { ws, socket, callbacks } = makeSocket()
-    socket.connect()
+    await socket.connect()
     ws.open()
     socket.close()
     expect(callbacks.onStatus).toHaveBeenLastCalledWith('closed')
@@ -69,28 +77,32 @@ describe('GameSocket', () => {
 })
 
 describe('GameSocket reconnect and resync', () => {
-  it('reconnects with backoff after an unexpected close', () => {
+  beforeEach(() => {
+    vi.mocked(fetchAuthSession).mockResolvedValue({ tokens: { accessToken: 'tok' } } as any)
+  })
+
+  it('reconnects with backoff after an unexpected close', async () => {
     vi.useFakeTimers()
     const sockets: FakeWS[] = []
     const callbacks = { onGame: vi.fn(), onError: vi.fn(), onStatus: vi.fn() }
     const socket = new GameSocket({
-      gameId: 'g1', token: 'tok', callbacks,
+      gameId: 'g1', callbacks,
       wsFactory: () => { const w = new FakeWS(); sockets.push(w); return w },
     })
-    socket.connect()
+    await socket.connect()
     sockets[0].open()
     sockets[0].onclose?.() // dropped, not user-initiated
     expect(callbacks.onStatus).toHaveBeenLastCalledWith('reconnecting')
     expect(sockets).toHaveLength(1)
-    vi.advanceTimersByTime(1000)
+    await vi.advanceTimersByTimeAsync(1000)
     expect(sockets).toHaveLength(2)
     sockets[1].onclose?.()
-    vi.advanceTimersByTime(1999)
+    await vi.advanceTimersByTimeAsync(1999)
     expect(sockets).toHaveLength(2)
-    vi.advanceTimersByTime(1)
+    await vi.advanceTimersByTimeAsync(1)
     expect(sockets).toHaveLength(3)
     socket.close()
-    vi.advanceTimersByTime(60_000)
+    await vi.advanceTimersByTimeAsync(60_000)
     expect(sockets).toHaveLength(3)
     vi.useRealTimers()
   })
@@ -100,9 +112,9 @@ describe('GameSocket reconnect and resync', () => {
     const callbacks = { onGame: vi.fn(), onError: vi.fn(), onStatus: vi.fn() }
     const fetchGame = vi.fn(async () => gameV(3) as never)
     const socket = new GameSocket({
-      gameId: 'g1', token: 'tok', callbacks, wsFactory: () => ws, fetchGame,
+      gameId: 'g1', callbacks, wsFactory: () => ws, fetchGame,
     })
-    socket.connect()
+    await socket.connect()
     ws.open()
     await Promise.resolve()
     await Promise.resolve()
@@ -115,9 +127,9 @@ describe('GameSocket reconnect and resync', () => {
     const callbacks = { onGame: vi.fn(), onError: vi.fn(), onStatus: vi.fn() }
     const fetchGame = vi.fn(async () => gameV(4) as never)
     const socket = new GameSocket({
-      gameId: 'g1', token: 'tok', callbacks, wsFactory: () => ws, fetchGame,
+      gameId: 'g1', callbacks, wsFactory: () => ws, fetchGame,
     })
-    socket.connect()
+    await socket.connect()
     ws.open()
     await Promise.resolve()
     await Promise.resolve()
@@ -134,11 +146,11 @@ describe('GameSocket reconnect and resync', () => {
     const ws = new FakeWS()
     const callbacks = { onGame: vi.fn(), onError: vi.fn(), onStatus: vi.fn() }
     const socket = new GameSocket({
-      gameId: 'g1', token: 'tok', callbacks,
+      gameId: 'g1', callbacks,
       wsFactory: () => ws,
       fetchGame: async () => gameV(3) as never,
     })
-    socket.connect()
+    await socket.connect()
     ws.receive(gameV(7)) // broadcast arrives before...
     ws.open()
     await Promise.resolve() // ...the resync fetch resolves stale

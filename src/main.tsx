@@ -4,8 +4,10 @@ import App from './App'
 import { configureAuth } from './core/auth';
 import './styles.css'
 
-configureAuth();
+import { appStore } from './store'
 
+configureAuth();
+appStore().getState().initSession();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

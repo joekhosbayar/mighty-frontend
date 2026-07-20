@@ -16,7 +16,7 @@ vi.mock('aws-amplify/auth', () => ({
 const TOKEN = `h.${btoa(JSON.stringify({ user_id: 'u1', username: 'alice' }))}.s`
 
 function makeDeps(over: Partial<Http> = {}) {
-  const sockets: Array<{ gameId: string; cb: Parameters<Deps['makeSocket']>[2]; socket: SocketLike }> = []
+  const sockets: Array<{ gameId: string; cb: Parameters<Deps['makeSocket']>[1]; socket: SocketLike }> = []
   const http: Http = {
     createGame: vi.fn(async () => baseGame({ id: 'g7', status: 'waiting' })),
     joinGame: vi.fn(async (_t, id) => baseGame({ id })),
@@ -27,7 +27,7 @@ function makeDeps(over: Partial<Http> = {}) {
   const storage = new Map<string, string>()
   const deps: Deps = {
     http,
-    makeSocket: (gameId, _token, cb) => {
+    makeSocket: (gameId, cb) => {
       const socket: SocketLike = { connect: vi.fn(), sendMove: vi.fn(), close: vi.fn() }
       sockets.push({ gameId, cb, socket })
       return socket

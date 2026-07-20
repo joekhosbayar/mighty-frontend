@@ -13,7 +13,7 @@ export interface SocketLike {
 
 export interface Deps {
   http: Http
-  makeSocket(gameId: string, token: string, cb: GameSocketCallbacks): SocketLike
+  makeSocket(gameId: string, cb: GameSocketCallbacks): SocketLike
 }
 
 export type ResumeResult = { ok: true } | { ok: false; reason: 'finished' | 'unavailable' }
@@ -59,7 +59,7 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
 
     const openSocket = (gameId: string) => {
       socket?.close()
-      socket = deps.makeSocket(gameId, get().token ?? '', {
+      socket = deps.makeSocket(gameId, {
         onGame: g => set({ game: g }),
         onError: msg => {
           if (msg === 'game busy' && lastMove && !busyRetried) {
@@ -146,7 +146,7 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
 
       async createGame(config) {
         try {
-          const g = await deps.http.createGame(get().token ?? '', config)
+          const g = await deps.http.createGame(config)
           enterGame(g)
           return g.id
         } catch (e) {
@@ -157,7 +157,7 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
 
       async joinGame(gameId) {
         try {
-          enterGame(await deps.http.joinGame(get().token ?? '', gameId))
+          enterGame(await deps.http.joinGame(gameId))
           return true
         } catch (e) {
           fail(e)
@@ -213,8 +213,8 @@ export function appStore(): StoreApi<AppState> {
     const http = createHttp(fetch.bind(globalThis))
     defaultStore = createAppStore({
       http,
-      makeSocket: (gameId, token, callbacks) =>
-        new GameSocket({ gameId, token, callbacks, fetchGame: id => http.getGame(id) }),
+      makeSocket: (gameId, callbacks) =>
+        new GameSocket({ gameId, callbacks, fetchGame: id => http.getGame(id) }),
     })
   }
   return defaultStore
