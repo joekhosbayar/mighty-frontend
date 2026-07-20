@@ -27,7 +27,7 @@ export interface AppState {
   connection: ConnectionStatus
   lastError: string | null
   signup(u: string, p: string, email: string): Promise<boolean>
-  login(u: string, p: string): Promise<boolean>
+  login(u: string, p: string): Promise<boolean | import('aws-amplify/auth').SignInOutput>
   logout(): void
   initSession(): Promise<void>
   refreshLobby(): Promise<void>
@@ -112,12 +112,15 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
 
       async login(u, p) {
         try {
-          await signIn({ username: u, password: p, options: { authFlowType: 'USER_AUTH' } });
-          const session = await fetchAuthSession();
-          const attrs = await fetchUserAttributes();
-          const token = session.tokens?.accessToken?.toString() ?? null;
-          set({ token, userId: attrs.sub ?? null, username: attrs.preferred_username ?? u, lastError: null });
-          return true;
+          const res = await signIn({ username: u, password: p, options: { authFlowType: 'USER_AUTH' } });
+          if (res.nextStep.signInStep === 'DONE') {
+            const session = await fetchAuthSession();
+            const attrs = await fetchUserAttributes();
+            const token = session.tokens?.accessToken?.toString() ?? null;
+            set({ token, userId: attrs.sub ?? null, username: attrs.preferred_username ?? u, lastError: null });
+            return true;
+          }
+          return res;
         } catch (e) {
           set({ lastError: errorMessage(e) });
           return false;

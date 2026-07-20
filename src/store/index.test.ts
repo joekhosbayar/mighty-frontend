@@ -6,7 +6,7 @@ import { createAppStore, type Deps, type SocketLike } from './index'
 import { baseGame, player } from '../core/testing/builders'
 
 vi.mock('aws-amplify/auth', () => ({
-  signIn: vi.fn(async () => {}),
+  signIn: vi.fn(async () => ({ nextStep: { signInStep: 'DONE' } })),
   signUp: vi.fn(async () => {}),
   signOut: vi.fn(async () => {}),
   fetchAuthSession: vi.fn(async () => ({ tokens: { accessToken: { toString: () => `h.${btoa(JSON.stringify({ user_id: 'u1', username: 'alice' }))}.s` } } })),

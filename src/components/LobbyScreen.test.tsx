@@ -4,6 +4,11 @@ import { describe, expect, it, vi } from 'vitest'
 import { LobbyScreen } from './LobbyScreen'
 import { baseGame, player } from '../core/testing/builders'
 import { getTableName } from '../core/names'
+import * as amplifyAuth from 'aws-amplify/auth'
+
+vi.mock('aws-amplify/auth', () => ({
+  associateWebAuthnCredential: vi.fn(),
+}))
 
 describe('LobbyScreen', () => {
   const games = [
@@ -66,5 +71,18 @@ describe('LobbyScreen', () => {
       <LobbyScreen games={[game]} username="u" onCreate={vi.fn()} onJoin={vi.fn()} onRefresh={vi.fn()} onLogout={vi.fn()} />,
     )
     expect(screen.getByText(/1\/4 seated/)).toBeInTheDocument()
+  })
+
+  it('registers passkey when button is clicked', async () => {
+    render(
+      <LobbyScreen games={[]} username="alice" onCreate={vi.fn()} onJoin={vi.fn()} onRefresh={vi.fn()} onLogout={vi.fn()} />
+    )
+    
+    const associateSpy = vi.spyOn(amplifyAuth, 'associateWebAuthnCredential').mockResolvedValue(undefined)
+    
+    await userEvent.click(screen.getByRole('button', { name: 'Register Passkey' }))
+    
+    expect(associateSpy).toHaveBeenCalled()
+    expect(await screen.findByText('Passkey registered successfully')).toBeInTheDocument()
   })
 })

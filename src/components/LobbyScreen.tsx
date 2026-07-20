@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Game, GameConfig } from '../core/types'
 import { getTableName } from '../core/names'
+import { associateWebAuthnCredential } from 'aws-amplify/auth'
 
 export interface LobbyScreenProps {
   games: Game[]
@@ -15,6 +16,7 @@ export function LobbyScreen({ games, username, onCreate, onJoin, onRefresh, onLo
   const [numPlayers, setNumPlayers] = useState(5)
   const [failDist, setFailDist] = useState<GameConfig['fail_dist']>('equal_split')
   const [allowJoker, setAllowJoker] = useState(true)
+  const [passkeyStatus, setPasskeyStatus] = useState<string | null>(null)
   useEffect(() => {
     onRefresh()
     const timer = setInterval(onRefresh, 3000)
@@ -30,6 +32,21 @@ export function LobbyScreen({ games, username, onCreate, onJoin, onRefresh, onLo
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <span style={{ color: 'var(--color-text-secondary)' }}>{username}</span>
+          {passkeyStatus && <span role="status" style={{ color: 'var(--color-accent)', fontSize: '0.85rem' }}>{passkeyStatus}</span>}
+          <button 
+            onClick={async () => {
+              try {
+                setPasskeyStatus(null)
+                await associateWebAuthnCredential()
+                setPasskeyStatus('Passkey registered successfully')
+              } catch (e: unknown) {
+                setPasskeyStatus(`Failed to register passkey: ${e instanceof Error ? e.message : String(e)}`)
+              }
+            }} 
+            style={{ background: 'transparent', border: '1px solid var(--color-accent)', color: 'var(--color-accent)' }}
+          >
+            Register Passkey
+          </button>
           <button onClick={onLogout}>Log out</button>
         </div>
       </header>

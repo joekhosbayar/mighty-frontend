@@ -17,7 +17,17 @@ export function LoginRoute() {
     <AuthScreen
       error={lastError}
       onLogin={async (u, p) => {
-        if (await login(u, p)) navigate(from, { replace: true })
+        const res = await login(u, p)
+        if (res === true) {
+          navigate(from, { replace: true })
+        }
+        return res
+      }}
+      onLoginSuccess={async () => {
+        await useApp.getState().initSession()
+        if (useApp.getState().token) {
+          navigate(from, { replace: true })
+        }
       }}
       onSignup={async (u, p, e) => {
         return await signup(u, p, e)
