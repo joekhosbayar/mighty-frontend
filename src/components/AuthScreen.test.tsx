@@ -14,22 +14,22 @@ vi.mock('aws-amplify/auth', () => ({
 }))
 
 describe('AuthScreen', () => {
-  it('submits login with username and password', async () => {
+  it('submits login with email and password', async () => {
     const onLogin = vi.fn()
     render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
-    await userEvent.type(screen.getByLabelText('Username'), 'alice')
+    await userEvent.type(screen.getByLabelText('Email'), 'alice@x.io')
     await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
-    expect(onLogin).toHaveBeenCalledWith('alice', 'pw123')
+    expect(onLogin).toHaveBeenCalledWith('alice@x.io', 'pw123')
   })
 
   it('switches to signup mode and submits with email', async () => {
     const onSignup = vi.fn()
     render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
     await userEvent.click(screen.getByRole('button', { name: 'Need an account? Sign up' }))
-    await userEvent.type(screen.getByLabelText('Username'), 'bob')
-    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.type(screen.getByLabelText('Email'), 'bob@x.io')
+    await userEvent.type(screen.getByLabelText('Display Name'), 'bob')
+    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.click(screen.getByRole('button', { name: 'Sign up' }))
     expect(onSignup).toHaveBeenCalledWith('bob', 'pw123', 'bob@x.io')
   })
@@ -47,9 +47,9 @@ describe('AuthScreen', () => {
     
     await userEvent.click(screen.getByRole('button', { name: 'Need an account? Sign up' }))
     
-    await userEvent.type(screen.getByLabelText('Username'), 'charlie')
-    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.type(screen.getByLabelText('Email'), 'charlie@x.io')
+    await userEvent.type(screen.getByLabelText('Display Name'), 'charlie')
+    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     
     await userEvent.click(screen.getByRole('button', { name: 'Sign up' }))
     
@@ -60,9 +60,9 @@ describe('AuthScreen', () => {
     
     await userEvent.click(screen.getByRole('button', { name: 'Confirm' }))
     
-    expect(amplifyAuth.confirmSignUp).toHaveBeenCalledWith({ username: 'charlie', confirmationCode: '123456' })
+    expect(amplifyAuth.confirmSignUp).toHaveBeenCalledWith({ username: 'charlie@x.io', confirmationCode: '123456' })
     await waitFor(() => {
-      expect(onLogin).toHaveBeenCalledWith('charlie', 'pw123')
+      expect(onLogin).toHaveBeenCalledWith('charlie@x.io', 'pw123')
     })
   })
 
@@ -70,13 +70,13 @@ describe('AuthScreen', () => {
     const onSignup = vi.fn().mockResolvedValue(true)
     render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
     await userEvent.click(screen.getByRole('button', { name: 'Need an account? Sign up' }))
-    await userEvent.type(screen.getByLabelText('Username'), 'charlie')
-    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.type(screen.getByLabelText('Email'), 'charlie@x.io')
+    await userEvent.type(screen.getByLabelText('Display Name'), 'charlie')
+    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.click(screen.getByRole('button', { name: 'Sign up' }))
     
     await userEvent.click(screen.getByRole('button', { name: 'Resend Code' }))
-    expect(amplifyAuth.resendSignUpCode).toHaveBeenCalledWith({ username: 'charlie' })
+    expect(amplifyAuth.resendSignUpCode).toHaveBeenCalledWith({ username: 'charlie@x.io' })
     expect(await screen.findByRole('status')).toHaveTextContent('Code resent successfully')
   })
 
@@ -84,20 +84,20 @@ describe('AuthScreen', () => {
     const onSignup = vi.fn().mockResolvedValue(true)
     render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
     await userEvent.click(screen.getByRole('button', { name: 'Need an account? Sign up' }))
-    await userEvent.type(screen.getByLabelText('Username'), 'charlie')
-    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.type(screen.getByLabelText('Email'), 'charlie@x.io')
+    await userEvent.type(screen.getByLabelText('Display Name'), 'charlie')
+    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.click(screen.getByRole('button', { name: 'Sign up' }))
     
     await userEvent.click(screen.getByRole('button', { name: 'Back to Sign up' }))
     expect(screen.getByRole('button', { name: 'Sign up' })).toBeInTheDocument()
   })
 
-  it('switches to forgot mode and submits username for reset', async () => {
+  it('switches to forgot mode and submits email for reset', async () => {
     render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
     
-    await userEvent.type(screen.getByLabelText('Username'), 'dave')
+    await userEvent.type(screen.getByLabelText('Email'), 'dave@x.io')
     
     const resetSpy = vi.spyOn(amplifyAuth, 'resetPassword').mockResolvedValue({
       isPasswordReset: false,
@@ -106,7 +106,7 @@ describe('AuthScreen', () => {
     
     await userEvent.click(screen.getByRole('button', { name: 'Send Reset Code' }))
     
-    expect(resetSpy).toHaveBeenCalledWith({ username: 'dave' })
+    expect(resetSpy).toHaveBeenCalledWith({ username: 'dave@x.io' })
     
     // Should transition to 'reset' mode
     expect(await screen.findByLabelText('Verification Code')).toBeInTheDocument()
@@ -117,7 +117,7 @@ describe('AuthScreen', () => {
     const onLogin = vi.fn()
     render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
-    await userEvent.type(screen.getByLabelText('Username'), 'eve')
+    await userEvent.type(screen.getByLabelText('Email'), 'eve@x.io')
     
     vi.spyOn(amplifyAuth, 'resetPassword').mockResolvedValue({
       isPasswordReset: false,
@@ -134,17 +134,17 @@ describe('AuthScreen', () => {
     
     await userEvent.click(screen.getByRole('button', { name: 'Reset Password' }))
     
-    expect(confirmSpy).toHaveBeenCalledWith({ username: 'eve', confirmationCode: '789012', newPassword: 'newpw123' })
+    expect(confirmSpy).toHaveBeenCalledWith({ username: 'eve@x.io', confirmationCode: '789012', newPassword: 'newpw123' })
     
     await waitFor(() => {
-      expect(onLogin).toHaveBeenCalledWith('eve', 'newpw123')
+      expect(onLogin).toHaveBeenCalledWith('eve@x.io', 'newpw123')
     })
   })
 
   it('shows error when resetPassword fails', async () => {
     render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
-    await userEvent.type(screen.getByLabelText('Username'), 'failuser')
+    await userEvent.type(screen.getByLabelText('Email'), 'failuser@x.io')
     vi.spyOn(amplifyAuth, 'resetPassword').mockRejectedValueOnce(new Error('User not found'))
     await userEvent.click(screen.getByRole('button', { name: 'Send Reset Code' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('User not found')
@@ -153,7 +153,7 @@ describe('AuthScreen', () => {
   it('shows error when confirmResetPassword fails', async () => {
     render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
-    await userEvent.type(screen.getByLabelText('Username'), 'failuser')
+    await userEvent.type(screen.getByLabelText('Email'), 'failuser@x.io')
     vi.spyOn(amplifyAuth, 'resetPassword').mockResolvedValue({
       isPasswordReset: false,
       nextStep: { resetPasswordStep: 'CONFIRM_RESET_PASSWORD_WITH_CODE' }
@@ -183,7 +183,7 @@ describe('AuthScreen', () => {
     } as any)
 
     render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
-    await userEvent.type(screen.getByLabelText('Username'), 'mfauser')
+    await userEvent.type(screen.getByLabelText('Email'), 'mfauser@x.io')
     await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
 
@@ -206,7 +206,7 @@ describe('AuthScreen', () => {
     } as any)
 
     render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={onLoginSuccess} onSignup={vi.fn()} />)
-    await userEvent.type(screen.getByLabelText('Username'), 'mfauser')
+    await userEvent.type(screen.getByLabelText('Email'), 'mfauser@x.io')
     await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
 
@@ -236,7 +236,7 @@ describe('AuthScreen', () => {
     const onLoginSuccess = vi.fn()
 
     render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={onLoginSuccess} onSignup={vi.fn()} />)
-    await userEvent.type(screen.getByLabelText('Username'), 'mfauser')
+    await userEvent.type(screen.getByLabelText('Email'), 'mfauser@x.io')
     await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
 
@@ -260,3 +260,4 @@ describe('AuthScreen', () => {
     })
   })
 })
+

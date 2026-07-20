@@ -102,7 +102,7 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
 
       async signup(u, p, email) {
         try {
-          await signUp({ username: u, password: p, options: { userAttributes: { email, preferred_username: u } } });
+          await signUp({ username: email, password: p, options: { userAttributes: { email, preferred_username: u } } });
           return true; // We don't auto-login here because they need to confirm
         } catch (e) {
           set({ lastError: errorMessage(e) });

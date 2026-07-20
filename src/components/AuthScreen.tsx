@@ -3,15 +3,15 @@ import { confirmSignUp, resendSignUpCode, resetPassword, confirmResetPassword, c
 
 export interface AuthScreenProps {
   error: string | null
-  onLogin(username: string, password: string): Promise<boolean | SignInOutput>
+  onLogin(email: string, password: string): Promise<boolean | SignInOutput>
   onLoginSuccess(): void
-  onSignup(username: string, password: string, email: string): void | boolean | Promise<void | boolean>
+  onSignup(displayName: string, password: string, email: string): void | boolean | Promise<void | boolean>
 }
 
 export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScreenProps) {
   const [mode, setMode] = useState<'login' | 'signup' | 'confirm' | 'forgot' | 'reset' | 'totp_setup' | 'mfa_confirm'>('login')
   const [totpUri, setTotpUri] = useState('')
-  const [username, setUsername] = useState('')
+  const [displayName, setDisplayName] = useState('')
   const [password, setPassword] = useState('')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
@@ -20,6 +20,37 @@ export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScr
   const [confirmMessage, setConfirmMessage] = useState<string | null>(null)
 
   const processSignInStep = async (res: boolean | SignInOutput) => {
+    if (res === true) {
+      onLoginSuccess()
+      return
+    }
+    if (typeof res !== 'boolean' && res?.nextStep?.signInStep === 'CONFIRM_SIGN_UP') {
+      // User tried to log in but hasn't confirmed their email yet
+      try {
+        await resendSignUpCode({ username: email })
+        setConfirmMessage('Code resent to your email.')
+      } catch (err) {
+        // Ignore resend error, just show the confirm screen
+      }
+      setMode('confirm')
+      return
+    }
+    if (typeof res !== 'boolean' && res?.nextStep?.signInStep === 'CONTINUE_SIGN_IN_WITH_FIRST_FACTOR_SELECTION') {
+      try {
+        res = await confirmSignIn({ challengeResponse: 'PASSWORD' })
+      } catch (err: unknown) {
+        setConfirmError(err instanceof Error && err.message ? err.message : 'Failed to select password factor')
+        return
+      }
+    }
+    if (typeof res !== 'boolean' && res?.nextStep?.signInStep === 'CONTINUE_SIGN_IN_WITH_PASSWORD') {
+      try {
+        res = await confirmSignIn({ challengeResponse: password })
+      } catch (err: unknown) {
+        setConfirmError(err instanceof Error && err.message ? err.message : 'Failed to verify password')
+        return
+      }
+    }
     if (typeof res !== 'boolean' && res?.nextStep?.signInStep === 'CONTINUE_SIGN_IN_WITH_MFA_SELECTION') {
       try {
         res = await confirmSignIn({ challengeResponse: 'TOTP' })
@@ -42,16 +73,18 @@ export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScr
       setCode('')
     } else if (typeof res !== 'boolean' && res?.nextStep?.signInStep === 'DONE') {
       onLoginSuccess()
+    } else if (typeof res !== 'boolean' && res?.nextStep?.signInStep) {
+      setConfirmError(`Unhandled sign-in step: ${res.nextStep.signInStep}`)
     }
   }
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (mode === 'login') {
-      const res = await onLogin(username, password)
+      const res = await onLogin(email, password)
       await processSignInStep(res)
     } else if (mode === 'signup') {
-      const result = await onSignup(username, password, email)
+      const result = await onSignup(displayName, password, email)
       if (result) setMode('confirm')
     }
   }
@@ -72,8 +105,8 @@ export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScr
     try {
       setConfirmError(null)
       setConfirmMessage(null)
-      await confirmSignUp({ username, confirmationCode: code })
-      const res = await onLogin(username, password)
+      await confirmSignUp({ username: email, confirmationCode: code })
+      const res = await onLogin(email, password)
       await processSignInStep(res)
     } catch (err: unknown) {
       setConfirmError(err instanceof Error && err.message ? err.message : 'Confirmation failed')
@@ -84,7 +117,7 @@ export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScr
     try {
       setConfirmError(null)
       setConfirmMessage(null)
-      await resendSignUpCode({ username })
+      await resendSignUpCode({ username: email })
       setConfirmMessage('Code resent successfully')
     } catch (err: unknown) {
       setConfirmError(err instanceof Error && err.message ? err.message : 'Failed to resend code')
@@ -96,7 +129,7 @@ export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScr
     try {
       setConfirmError(null)
       setConfirmMessage(null)
-      await resetPassword({ username })
+      await resetPassword({ username: email })
       setCode('')
       setMode('reset')
     } catch (err: unknown) {
@@ -109,8 +142,8 @@ export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScr
     try {
       setConfirmError(null)
       setConfirmMessage(null)
-      await confirmResetPassword({ username, confirmationCode: code, newPassword })
-      const res = await onLogin(username, newPassword)
+      await confirmResetPassword({ username: email, confirmationCode: code, newPassword })
+      const res = await onLogin(email, newPassword)
       await processSignInStep(res)
     } catch (err: unknown) {
       setConfirmError(err instanceof Error && err.message ? err.message : 'Failed to reset password')
@@ -152,8 +185,8 @@ export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScr
           ) : mode === 'forgot' ? (
             <>
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                Username
-                <input value={username} onChange={e => setUsername(e.target.value)} />
+                Email
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} />
               </label>
               {confirmError && <p role="alert">{confirmError}</p>}
               {error && <p role="alert">{error}</p>}
@@ -200,19 +233,19 @@ export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScr
           ) : (
             <>
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                Username
-                <input value={username} onChange={e => setUsername(e.target.value)} />
+                Email
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} />
               </label>
+              {mode === 'signup' && (
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  Display Name
+                  <input value={displayName} onChange={e => setDisplayName(e.target.value)} />
+                </label>
+              )}
               <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 Password
                 <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
               </label>
-              {mode === 'signup' && (
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  Email
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} />
-                </label>
-              )}
               {error && <p role="alert">{error}</p>}
               <button type="submit" style={{ marginTop: '1rem', background: 'var(--color-accent)', color: 'var(--color-ink)', fontWeight: 'bold' }}>
                 {mode === 'login' ? 'Log in' : 'Sign up'}
