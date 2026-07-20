@@ -20,7 +20,7 @@ export function LoginRoute() {
         if (await login(u, p)) navigate(from, { replace: true })
       }}
       onSignup={async (u, p, e) => {
-        if (await signup(u, p, e)) navigate(from, { replace: true })
+        return await signup(u, p, e)
       }}
     />
   )
