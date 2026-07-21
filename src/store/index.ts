@@ -28,6 +28,7 @@ export interface AppState {
   lastError: string | null
   signup(u: string, p: string, email: string): Promise<boolean>
   login(u: string, p: string): Promise<boolean | import('aws-amplify/auth').SignInOutput>
+  loginWithPasskey(u: string): Promise<boolean | import('aws-amplify/auth').SignInOutput>
   logout(): void
   initSession(): Promise<void>
   refreshLobby(): Promise<void>
@@ -117,6 +118,22 @@ export function createAppStore(deps: Deps): StoreApi<AppState> {
         // returning DONE directly for non-MFA users. Without it, USER_AUTH does
         // first-factor discovery and stalls waiting for a factor selection.
         const res = await signIn({ username: u, password: p, options: { authFlowType: 'USER_AUTH', preferredChallenge: 'PASSWORD_SRP' } });
+          if (res.nextStep.signInStep === 'DONE') {
+            const session = await fetchAuthSession();
+            const attrs = await fetchUserAttributes();
+            const token = session.tokens?.accessToken?.toString() ?? null;
+            set({ token, userId: attrs.sub ?? null, username: attrs.preferred_username ?? u, lastError: null });
+            return true;
+          }
+          return res;
+        } catch (e) {
+          set({ lastError: errorMessage(e) });
+          return false;
+        }
+      },
+      async loginWithPasskey(u: string) {
+        try {
+          const res = await signIn({ username: u, options: { authFlowType: 'USER_AUTH', preferredChallenge: 'WEB_AUTHN' } })
           if (res.nextStep.signInStep === 'DONE') {
             const session = await fetchAuthSession();
             const attrs = await fetchUserAttributes();

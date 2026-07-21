@@ -4,11 +4,12 @@ import { confirmSignUp, resendSignUpCode, resetPassword, confirmResetPassword, c
 export interface AuthScreenProps {
   error: string | null
   onLogin(email: string, password: string): Promise<boolean | SignInOutput>
+  onLoginWithPasskey(email: string): Promise<boolean | SignInOutput>
   onLoginSuccess(): void
   onSignup(displayName: string, password: string, email: string): void | boolean | Promise<void | boolean>
 }
 
-export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScreenProps) {
+export function AuthScreen({ error, onLogin, onLoginWithPasskey, onLoginSuccess, onSignup }: AuthScreenProps) {
   const [mode, setMode] = useState<'login' | 'signup' | 'confirm' | 'forgot' | 'reset' | 'totp_setup' | 'mfa_confirm'>('login')
   const [totpUri, setTotpUri] = useState('')
   const [displayName, setDisplayName] = useState('')
@@ -251,9 +252,17 @@ export function AuthScreen({ error, onLogin, onLoginSuccess, onSignup }: AuthScr
                 {mode === 'login' ? 'Log in' : 'Sign up'}
               </button>
               {mode === 'login' && (
-                <button type="button" onClick={() => setMode('forgot')} style={{ marginTop: '0.5rem', background: 'transparent', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: '0.9rem' }}>
-                  Forgot password?
-                </button>
+                <>
+                  <button type="button" onClick={async () => {
+                    const res = await onLoginWithPasskey(email)
+                    await processSignInStep(res)
+                  }} style={{ marginTop: '0.5rem', background: 'transparent', border: '1px solid var(--color-accent)', color: 'var(--color-accent)', fontWeight: 'bold', padding: '0.75rem' }}>
+                    Sign in with Passkey
+                  </button>
+                  <button type="button" onClick={() => setMode('forgot')} style={{ marginTop: '0.5rem', background: 'transparent', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: '0.9rem' }}>
+                    Forgot password?
+                  </button>
+                </>
               )}
             </>
           )}
