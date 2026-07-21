@@ -16,7 +16,7 @@ vi.mock('aws-amplify/auth', () => ({
 describe('AuthScreen', () => {
   it('submits login with email and password', async () => {
     const onLogin = vi.fn()
-    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+    render(<AuthScreen onLoginWithPasskey={vi.fn()} error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
     await userEvent.type(screen.getByLabelText('Email'), 'alice@x.io')
     await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
@@ -25,7 +25,7 @@ describe('AuthScreen', () => {
 
   it('switches to signup mode and submits with email', async () => {
     const onSignup = vi.fn()
-    render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
+    render(<AuthScreen onLoginWithPasskey={vi.fn()} error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
     await userEvent.click(screen.getByRole('button', { name: 'Need an account? Sign up' }))
     await userEvent.type(screen.getByLabelText('Email'), 'bob@x.io')
     await userEvent.type(screen.getByLabelText('Display Name'), 'bob')
@@ -35,7 +35,7 @@ describe('AuthScreen', () => {
   })
 
   it('shows the error as an alert', () => {
-    render(<AuthScreen error="invalid credentials" onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+    render(<AuthScreen onLoginWithPasskey={vi.fn()} error="invalid credentials" onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
     expect(screen.getByRole('alert')).toHaveTextContent('invalid credentials')
   })
 
@@ -43,7 +43,7 @@ describe('AuthScreen', () => {
     const onLogin = vi.fn()
     const onSignup = vi.fn().mockResolvedValue(true)
 
-    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
+    render(<AuthScreen onLoginWithPasskey={vi.fn()} error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
     
     await userEvent.click(screen.getByRole('button', { name: 'Need an account? Sign up' }))
     
@@ -75,7 +75,7 @@ describe('AuthScreen', () => {
     // must be answered with the brand-new password the user just set.
     const onLogin = vi.fn().mockResolvedValue({ nextStep: { signInStep: 'CONFIRM_SIGN_IN_WITH_PASSWORD' } })
 
-    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+    render(<AuthScreen onLoginWithPasskey={vi.fn()} error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
 
     await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
     await userEvent.type(screen.getByLabelText('Email'), 'dana@x.io')
@@ -94,7 +94,7 @@ describe('AuthScreen', () => {
 
   it('resends verification code', async () => {
     const onSignup = vi.fn().mockResolvedValue(true)
-    render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
+    render(<AuthScreen onLoginWithPasskey={vi.fn()} error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
     await userEvent.click(screen.getByRole('button', { name: 'Need an account? Sign up' }))
     await userEvent.type(screen.getByLabelText('Email'), 'charlie@x.io')
     await userEvent.type(screen.getByLabelText('Display Name'), 'charlie')
@@ -108,7 +108,7 @@ describe('AuthScreen', () => {
 
   it('can go back to signup from confirm mode', async () => {
     const onSignup = vi.fn().mockResolvedValue(true)
-    render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
+    render(<AuthScreen onLoginWithPasskey={vi.fn()} error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
     await userEvent.click(screen.getByRole('button', { name: 'Need an account? Sign up' }))
     await userEvent.type(screen.getByLabelText('Email'), 'charlie@x.io')
     await userEvent.type(screen.getByLabelText('Display Name'), 'charlie')
@@ -120,7 +120,7 @@ describe('AuthScreen', () => {
   })
 
   it('switches to forgot mode and submits email for reset', async () => {
-    render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+    render(<AuthScreen onLoginWithPasskey={vi.fn()} error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
     
     await userEvent.type(screen.getByLabelText('Email'), 'dave@x.io')
@@ -141,7 +141,7 @@ describe('AuthScreen', () => {
 
   it('submits code and new password in reset mode', async () => {
     const onLogin = vi.fn()
-    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+    render(<AuthScreen onLoginWithPasskey={vi.fn()} error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
     await userEvent.type(screen.getByLabelText('Email'), 'eve@x.io')
     
@@ -168,7 +168,7 @@ describe('AuthScreen', () => {
   })
 
   it('shows error when resetPassword fails', async () => {
-    render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+    render(<AuthScreen onLoginWithPasskey={vi.fn()} error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
     await userEvent.type(screen.getByLabelText('Email'), 'failuser@x.io')
     vi.spyOn(amplifyAuth, 'resetPassword').mockRejectedValueOnce(new Error('User not found'))
@@ -177,7 +177,7 @@ describe('AuthScreen', () => {
   })
 
   it('shows error when confirmResetPassword fails', async () => {
-    render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+    render(<AuthScreen onLoginWithPasskey={vi.fn()} error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
     await userEvent.type(screen.getByLabelText('Email'), 'failuser@x.io')
     vi.spyOn(amplifyAuth, 'resetPassword').mockResolvedValue({
@@ -208,7 +208,7 @@ describe('AuthScreen', () => {
       getSetupUri: () => ({ toString: () => 'otpauth://totp/test' })
     } as any)
 
-    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+    render(<AuthScreen onLoginWithPasskey={vi.fn()} error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
     await userEvent.type(screen.getByLabelText('Email'), 'mfauser@x.io')
     await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
@@ -231,7 +231,7 @@ describe('AuthScreen', () => {
       getSetupUri: () => ({ toString: () => 'otpauth://totp/test' })
     } as any)
 
-    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={onLoginSuccess} onSignup={vi.fn()} />)
+    render(<AuthScreen onLoginWithPasskey={vi.fn()} error={null} onLogin={onLogin} onLoginSuccess={onLoginSuccess} onSignup={vi.fn()} />)
     await userEvent.type(screen.getByLabelText('Email'), 'mfauser@x.io')
     await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
@@ -261,7 +261,7 @@ describe('AuthScreen', () => {
     })
     const onLoginSuccess = vi.fn()
 
-    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={onLoginSuccess} onSignup={vi.fn()} />)
+    render(<AuthScreen onLoginWithPasskey={vi.fn()} error={null} onLogin={onLogin} onLoginSuccess={onLoginSuccess} onSignup={vi.fn()} />)
     await userEvent.type(screen.getByLabelText('Email'), 'mfauser@x.io')
     await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
