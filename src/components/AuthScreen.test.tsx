@@ -1,31 +1,289 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { AuthScreen } from './AuthScreen'
+import * as amplifyAuth from 'aws-amplify/auth'
+
+vi.mock('aws-amplify/auth', () => ({
+  confirmSignUp: vi.fn(),
+  resendSignUpCode: vi.fn(),
+  resetPassword: vi.fn(),
+  confirmResetPassword: vi.fn(),
+  confirmSignIn: vi.fn(),
+  setUpTOTP: vi.fn(),
+}))
 
 describe('AuthScreen', () => {
-  it('submits login with username and password', async () => {
+  it('submits login with email and password', async () => {
     const onLogin = vi.fn()
-    render(<AuthScreen error={null} onLogin={onLogin} onSignup={vi.fn()} />)
-    await userEvent.type(screen.getByLabelText('Username'), 'alice')
+    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText('Email'), 'alice@x.io')
     await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
-    expect(onLogin).toHaveBeenCalledWith('alice', 'pw123')
+    expect(onLogin).toHaveBeenCalledWith('alice@x.io', 'pw123')
   })
 
   it('switches to signup mode and submits with email', async () => {
     const onSignup = vi.fn()
-    render(<AuthScreen error={null} onLogin={vi.fn()} onSignup={onSignup} />)
+    render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
     await userEvent.click(screen.getByRole('button', { name: 'Need an account? Sign up' }))
-    await userEvent.type(screen.getByLabelText('Username'), 'bob')
-    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.type(screen.getByLabelText('Email'), 'bob@x.io')
+    await userEvent.type(screen.getByLabelText('Display Name'), 'bob')
+    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
     await userEvent.click(screen.getByRole('button', { name: 'Sign up' }))
     expect(onSignup).toHaveBeenCalledWith('bob', 'pw123', 'bob@x.io')
   })
 
   it('shows the error as an alert', () => {
-    render(<AuthScreen error="invalid credentials" onLogin={vi.fn()} onSignup={vi.fn()} />)
+    render(<AuthScreen error="invalid credentials" onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
     expect(screen.getByRole('alert')).toHaveTextContent('invalid credentials')
   })
+
+  it('transitions to confirm mode and submits verification code', async () => {
+    const onLogin = vi.fn()
+    const onSignup = vi.fn().mockResolvedValue(true)
+
+    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
+    
+    await userEvent.click(screen.getByRole('button', { name: 'Need an account? Sign up' }))
+    
+    await userEvent.type(screen.getByLabelText('Email'), 'charlie@x.io')
+    await userEvent.type(screen.getByLabelText('Display Name'), 'charlie')
+    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
+    
+    await userEvent.click(screen.getByRole('button', { name: 'Sign up' }))
+    
+    expect(onSignup).toHaveBeenCalledWith('charlie', 'pw123', 'charlie@x.io')
+
+    const codeInput = await screen.findByLabelText('Verification Code')
+    await userEvent.type(codeInput, '123456')
+    
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm' }))
+    
+    expect(amplifyAuth.confirmSignUp).toHaveBeenCalledWith({ username: 'charlie@x.io', confirmationCode: '123456' })
+    await waitFor(() => {
+      expect(onLogin).toHaveBeenCalledWith('charlie@x.io', 'pw123')
+    })
+  })
+
+  it('resets the password and logs in with the NEW password, not the stale login field', async () => {
+    vi.mocked(amplifyAuth.resetPassword).mockResolvedValue({} as never)
+    vi.mocked(amplifyAuth.confirmResetPassword).mockResolvedValue(undefined as never)
+    vi.mocked(amplifyAuth.confirmSignIn).mockResolvedValue({ nextStep: { signInStep: 'DONE' } } as never)
+    // After confirmResetPassword, AuthScreen auto-logs-in; if the flow returns
+    // the password challenge (Amplify v6 step CONFIRM_SIGN_IN_WITH_PASSWORD), it
+    // must be answered with the brand-new password the user just set.
+    const onLogin = vi.fn().mockResolvedValue({ nextStep: { signInStep: 'CONFIRM_SIGN_IN_WITH_PASSWORD' } })
+
+    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
+    await userEvent.type(screen.getByLabelText('Email'), 'dana@x.io')
+    await userEvent.click(screen.getByRole('button', { name: 'Send Reset Code' }))
+
+    await userEvent.type(await screen.findByLabelText('Verification Code'), '654321')
+    await userEvent.type(screen.getByLabelText('New Password'), 'NewPass123')
+    await userEvent.click(screen.getByRole('button', { name: 'Reset Password' }))
+
+    await waitFor(() => {
+      expect(onLogin).toHaveBeenCalledWith('dana@x.io', 'NewPass123')
+    })
+    // The password-challenge answer must be the new password — not the empty login field.
+    expect(amplifyAuth.confirmSignIn).toHaveBeenCalledWith({ challengeResponse: 'NewPass123' })
+  })
+
+  it('resends verification code', async () => {
+    const onSignup = vi.fn().mockResolvedValue(true)
+    render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Need an account? Sign up' }))
+    await userEvent.type(screen.getByLabelText('Email'), 'charlie@x.io')
+    await userEvent.type(screen.getByLabelText('Display Name'), 'charlie')
+    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
+    await userEvent.click(screen.getByRole('button', { name: 'Sign up' }))
+    
+    await userEvent.click(screen.getByRole('button', { name: 'Resend Code' }))
+    expect(amplifyAuth.resendSignUpCode).toHaveBeenCalledWith({ username: 'charlie@x.io' })
+    expect(await screen.findByRole('status')).toHaveTextContent('Code resent successfully')
+  })
+
+  it('can go back to signup from confirm mode', async () => {
+    const onSignup = vi.fn().mockResolvedValue(true)
+    render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={onSignup} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Need an account? Sign up' }))
+    await userEvent.type(screen.getByLabelText('Email'), 'charlie@x.io')
+    await userEvent.type(screen.getByLabelText('Display Name'), 'charlie')
+    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
+    await userEvent.click(screen.getByRole('button', { name: 'Sign up' }))
+    
+    await userEvent.click(screen.getByRole('button', { name: 'Back to Sign up' }))
+    expect(screen.getByRole('button', { name: 'Sign up' })).toBeInTheDocument()
+  })
+
+  it('switches to forgot mode and submits email for reset', async () => {
+    render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
+    
+    await userEvent.type(screen.getByLabelText('Email'), 'dave@x.io')
+    
+    const resetSpy = vi.spyOn(amplifyAuth, 'resetPassword').mockResolvedValue({
+      isPasswordReset: false,
+      nextStep: { resetPasswordStep: 'CONFIRM_RESET_PASSWORD_WITH_CODE' }
+    } as any)
+    
+    await userEvent.click(screen.getByRole('button', { name: 'Send Reset Code' }))
+    
+    expect(resetSpy).toHaveBeenCalledWith({ username: 'dave@x.io' })
+    
+    // Should transition to 'reset' mode
+    expect(await screen.findByLabelText('Verification Code')).toBeInTheDocument()
+    expect(screen.getByLabelText('New Password')).toBeInTheDocument()
+  })
+
+  it('submits code and new password in reset mode', async () => {
+    const onLogin = vi.fn()
+    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
+    await userEvent.type(screen.getByLabelText('Email'), 'eve@x.io')
+    
+    vi.spyOn(amplifyAuth, 'resetPassword').mockResolvedValue({
+      isPasswordReset: false,
+      nextStep: { resetPasswordStep: 'CONFIRM_RESET_PASSWORD_WITH_CODE' }
+    } as any)
+    
+    await userEvent.click(screen.getByRole('button', { name: 'Send Reset Code' }))
+    
+    const codeInput = await screen.findByLabelText('Verification Code')
+    await userEvent.type(codeInput, '789012')
+    await userEvent.type(screen.getByLabelText('New Password'), 'newpw123')
+    
+    const confirmSpy = vi.spyOn(amplifyAuth, 'confirmResetPassword').mockResolvedValue(undefined)
+    
+    await userEvent.click(screen.getByRole('button', { name: 'Reset Password' }))
+    
+    expect(confirmSpy).toHaveBeenCalledWith({ username: 'eve@x.io', confirmationCode: '789012', newPassword: 'newpw123' })
+    
+    await waitFor(() => {
+      expect(onLogin).toHaveBeenCalledWith('eve@x.io', 'newpw123')
+    })
+  })
+
+  it('shows error when resetPassword fails', async () => {
+    render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
+    await userEvent.type(screen.getByLabelText('Email'), 'failuser@x.io')
+    vi.spyOn(amplifyAuth, 'resetPassword').mockRejectedValueOnce(new Error('User not found'))
+    await userEvent.click(screen.getByRole('button', { name: 'Send Reset Code' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('User not found')
+  })
+
+  it('shows error when confirmResetPassword fails', async () => {
+    render(<AuthScreen error={null} onLogin={vi.fn()} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
+    await userEvent.type(screen.getByLabelText('Email'), 'failuser@x.io')
+    vi.spyOn(amplifyAuth, 'resetPassword').mockResolvedValue({
+      isPasswordReset: false,
+      nextStep: { resetPasswordStep: 'CONFIRM_RESET_PASSWORD_WITH_CODE' }
+    } as any)
+    await userEvent.click(screen.getByRole('button', { name: 'Send Reset Code' }))
+    const codeInput = await screen.findByLabelText('Verification Code')
+    await userEvent.type(codeInput, '789012')
+    await userEvent.type(screen.getByLabelText('New Password'), 'newpw123')
+    
+    vi.spyOn(amplifyAuth, 'confirmResetPassword').mockRejectedValueOnce(new Error('Invalid code'))
+    await userEvent.click(screen.getByRole('button', { name: 'Reset Password' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Invalid code')
+  })
+
+  it('handles MFA selection and transitions to TOTP setup', async () => {
+    const onLogin = vi.fn().mockResolvedValue({
+      nextStep: { signInStep: 'CONTINUE_SIGN_IN_WITH_MFA_SELECTION' }
+    })
+    
+    vi.spyOn(amplifyAuth, 'confirmSignIn').mockResolvedValueOnce({
+      isSignedIn: false,
+      nextStep: { signInStep: 'CONTINUE_SIGN_IN_WITH_TOTP_SETUP' }
+    } as any)
+    
+    vi.spyOn(amplifyAuth, 'setUpTOTP').mockResolvedValueOnce({
+      getSetupUri: () => ({ toString: () => 'otpauth://totp/test' })
+    } as any)
+
+    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={vi.fn()} onSignup={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText('Email'), 'mfauser@x.io')
+    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
+
+    await waitFor(() => {
+      expect(amplifyAuth.confirmSignIn).toHaveBeenCalledWith({ challengeResponse: 'TOTP' })
+      expect(amplifyAuth.setUpTOTP).toHaveBeenCalled()
+      expect(screen.getByText(/Copy this URI/)).toBeInTheDocument()
+      expect(screen.getByText('otpauth://totp/test')).toBeInTheDocument()
+    })
+  })
+
+  it('handles submitting MFA code during TOTP setup', async () => {
+    const onLogin = vi.fn().mockResolvedValue({
+      nextStep: { signInStep: 'CONTINUE_SIGN_IN_WITH_TOTP_SETUP' }
+    })
+    const onLoginSuccess = vi.fn()
+    
+    vi.spyOn(amplifyAuth, 'setUpTOTP').mockResolvedValueOnce({
+      getSetupUri: () => ({ toString: () => 'otpauth://totp/test' })
+    } as any)
+
+    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={onLoginSuccess} onSignup={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText('Email'), 'mfauser@x.io')
+    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('otpauth://totp/test')).toBeInTheDocument()
+    })
+
+    vi.spyOn(amplifyAuth, 'confirmSignIn').mockResolvedValueOnce({
+      isSignedIn: true,
+      nextStep: { signInStep: 'DONE' }
+    } as any)
+
+    const codeInput = screen.getByLabelText('Authenticator Code')
+    await userEvent.type(codeInput, '123456')
+    await userEvent.click(screen.getByRole('button', { name: 'Verify' }))
+
+    expect(amplifyAuth.confirmSignIn).toHaveBeenCalledWith({ challengeResponse: '123456' })
+    await waitFor(() => {
+      expect(onLoginSuccess).toHaveBeenCalled()
+    })
+  })
+
+  it('transitions to software token MFA and confirms', async () => {
+    const onLogin = vi.fn().mockResolvedValue({
+      nextStep: { signInStep: 'CONFIRM_SIGN_IN_WITH_TOTP_CODE' }
+    })
+    const onLoginSuccess = vi.fn()
+
+    render(<AuthScreen error={null} onLogin={onLogin} onLoginSuccess={onLoginSuccess} onSignup={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText('Email'), 'mfauser@x.io')
+    await userEvent.type(screen.getByLabelText('Password'), 'pw123')
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Authenticator Code')).toBeInTheDocument()
+      expect(screen.queryByText(/Copy this URI/)).not.toBeInTheDocument()
+    })
+
+    vi.spyOn(amplifyAuth, 'confirmSignIn').mockResolvedValueOnce({
+      isSignedIn: true,
+      nextStep: { signInStep: 'DONE' }
+    } as any)
+
+    const codeInput = screen.getByLabelText('Authenticator Code')
+    await userEvent.type(codeInput, '654321')
+    await userEvent.click(screen.getByRole('button', { name: 'Verify' }))
+
+    expect(amplifyAuth.confirmSignIn).toHaveBeenCalledWith({ challengeResponse: '654321' })
+    await waitFor(() => {
+      expect(onLoginSuccess).toHaveBeenCalled()
+    })
+  })
 })
+

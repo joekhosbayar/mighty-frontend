@@ -11,10 +11,11 @@ function UserProbe() {
 
 describe('store context', () => {
   it('useApp reads the store provided by StoreProvider', () => {
-    const { deps, storage } = makeTestDeps()
-    storage.set('mighty.token', TEST_TOKEN)
+    const { deps } = makeTestDeps()
+    const store = createAppStore(deps)
+    store.setState({ token: TEST_TOKEN, userId: 'u1', username: 'alice' })
     render(
-      <StoreProvider store={createAppStore(deps)}>
+      <StoreProvider store={store}>
         <UserProbe />
       </StoreProvider>,
     )

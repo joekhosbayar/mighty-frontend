@@ -1,12 +1,13 @@
 import { Navigate, useLocation, useNavigate } from 'react-router'
 import { AuthScreen } from '../components/AuthScreen'
-import { useApp } from '../store/context'
+import { useApp, useAppStore } from '../store/context'
 
 export function LoginRoute() {
   const token = useApp(s => s.token)
   const lastError = useApp(s => s.lastError)
   const login = useApp(s => s.login)
   const signup = useApp(s => s.signup)
+  const store = useAppStore()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/lobby'
@@ -17,10 +18,24 @@ export function LoginRoute() {
     <AuthScreen
       error={lastError}
       onLogin={async (u, p) => {
-        if (await login(u, p)) navigate(from, { replace: true })
+        const res = await login(u, p)
+        if (res === true) {
+          navigate(from, { replace: true })
+        }
+        return res
+      }}
+      onLoginSuccess={async () => {
+        // login() already populated the store on the direct-DONE path; only the
+        // confirmSignIn/MFA completion path leaves the token unset and needs a fetch.
+        if (!store.getState().token) {
+          await store.getState().initSession()
+        }
+        if (store.getState().token) {
+          navigate(from, { replace: true })
+        }
       }}
       onSignup={async (u, p, e) => {
-        if (await signup(u, p, e)) navigate(from, { replace: true })
+        return await signup(u, p, e)
       }}
     />
   )

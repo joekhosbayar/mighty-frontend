@@ -9,8 +9,6 @@ export const TEST_TOKEN = `h.${btoa(JSON.stringify({ user_id: 'u1', username: 'a
 export function makeTestDeps(over: Partial<Http> = {}) {
   const sockets: Array<{ gameId: string; cb: Parameters<Deps['makeSocket']>[2]; socket: SocketLike }> = []
   const http: Http = {
-    signup: vi.fn(async () => ({ id: 'u1', username: 'alice', email: 'a@b.c' })),
-    login: vi.fn(async () => TEST_TOKEN),
     createGame: vi.fn(async () => baseGame({ id: 'g7', status: 'waiting' })),
     joinGame: vi.fn(async (_t, id) => baseGame({ id })),
     listGames: vi.fn(async () => [baseGame({ id: 'gA', status: 'waiting' })]),
@@ -24,11 +22,6 @@ export function makeTestDeps(over: Partial<Http> = {}) {
       const socket: SocketLike = { connect: vi.fn(), sendMove: vi.fn(), close: vi.fn() }
       sockets.push({ gameId, cb, socket })
       return socket
-    },
-    storage: {
-      getItem: k => store.get(k) ?? null,
-      setItem: (k, v) => void store.set(k, v),
-      removeItem: k => void store.delete(k),
     },
   }
   return { deps, http, sockets, storage: store }
