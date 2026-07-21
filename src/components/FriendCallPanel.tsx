@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Card, Rank, Suit } from '../core/types'
-import type { TableView } from '../core/view'
+import type { TableView, HandCard } from '../core/view'
 import { SlotWheel } from './SlotWheel'
 import { PhysicalCard } from './PhysicalCard'
 
@@ -26,8 +26,8 @@ function formatSuit(s: Suit): React.ReactNode {
 
 function getRecommendedFriend(view: TableView): Card | null {
   const trump = view.contract?.suit || 'none'
-  const hand = view.myHand || []
-  const hasCard = (c: Card) => hand.some(hc => sameCard(hc, c))
+  const hand = view.hand || []
+  const hasCard = (c: Card) => hand.some((hc: HandCard) => sameCard(hc.card, c))
 
   const mighty = mightyCard(trump)
   if (!hasCard(mighty)) return mighty

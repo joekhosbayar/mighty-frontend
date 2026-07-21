@@ -7,10 +7,10 @@ export const TEST_TOKEN = `h.${btoa(JSON.stringify({ user_id: 'u1', username: 'a
 
 /** Builds injectable store deps with vitest mocks and a captured socket list. */
 export function makeTestDeps(over: Partial<Http> = {}) {
-  const sockets: Array<{ gameId: string; cb: Parameters<Deps['makeSocket']>[2]; socket: SocketLike }> = []
+  const sockets: Array<{ gameId: string; cb: Parameters<Deps['makeSocket']>[1]; socket: SocketLike }> = []
   const http: Http = {
     createGame: vi.fn(async () => baseGame({ id: 'g7', status: 'waiting' })),
-    joinGame: vi.fn(async (_t, id) => baseGame({ id })),
+    joinGame: vi.fn(async (id: string) => baseGame({ id })),
     listGames: vi.fn(async () => [baseGame({ id: 'gA', status: 'waiting' })]),
     getGame: vi.fn(async id => baseGame({ id })),
     ...over,
@@ -18,7 +18,7 @@ export function makeTestDeps(over: Partial<Http> = {}) {
   const store = new Map<string, string>()
   const deps: Deps = {
     http,
-    makeSocket: (gameId, _token, cb) => {
+    makeSocket: (gameId, cb) => {
       const socket: SocketLike = { connect: vi.fn(), sendMove: vi.fn(), close: vi.fn() }
       sockets.push({ gameId, cb, socket })
       return socket

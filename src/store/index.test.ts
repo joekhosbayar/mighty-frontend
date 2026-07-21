@@ -19,12 +19,11 @@ function makeDeps(over: Partial<Http> = {}) {
   const sockets: Array<{ gameId: string; cb: Parameters<Deps['makeSocket']>[1]; socket: SocketLike }> = []
   const http: Http = {
     createGame: vi.fn(async () => baseGame({ id: 'g7', status: 'waiting' })),
-    joinGame: vi.fn(async (_t, id) => baseGame({ id })),
+    joinGame: vi.fn(async (id: string) => baseGame({ id })),
     listGames: vi.fn(async () => [baseGame({ id: 'gA', status: 'waiting' })] as Game[]),
     getGame: vi.fn(async id => baseGame({ id })),
     ...over,
   }
-  const storage = new Map<string, string>()
   const deps: Deps = {
     http,
     makeSocket: (gameId, cb) => {

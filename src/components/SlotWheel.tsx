@@ -1,4 +1,4 @@
-import { useEffect, useRef, KeyboardEvent, useId } from 'react';
+import { useEffect, useRef, type KeyboardEvent, useId } from 'react';
 
 interface SlotWheelProps<T extends string> {
   options: readonly T[];
