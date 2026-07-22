@@ -231,7 +231,8 @@ let defaultStore: StoreApi<AppState> | null = null
 
 export function appStore(): StoreApi<AppState> {
   if (!defaultStore) {
-    const http = createHttp(fetch.bind(globalThis))
+    const base = (import.meta.env.VITE_API_URL as string | undefined) || ''
+    const http = createHttp(fetch.bind(globalThis), base)
     defaultStore = createAppStore({
       http,
       makeSocket: (gameId, callbacks) =>

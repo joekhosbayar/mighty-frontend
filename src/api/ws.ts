@@ -27,8 +27,14 @@ export interface GameSocketOptions {
 }
 
 function browserWsFactory(path: string): WebSocketLike {
-  const proto = location.protocol === 'https:' ? 'wss' : 'ws'
-  return new WebSocket(`${proto}://${location.host}${path}`) as unknown as WebSocketLike
+  const apiUrl = import.meta.env.VITE_API_URL as string | undefined
+  if (apiUrl) {
+    const url = new URL(apiUrl)
+    const proto = url.protocol === 'https:' ? 'wss:' : 'ws:'
+    return new WebSocket(`${proto}//${url.host}${path}`) as unknown as WebSocketLike
+  }
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return new WebSocket(`${proto}//${location.host}${path}`) as unknown as WebSocketLike
 }
 
 export class GameSocket {
