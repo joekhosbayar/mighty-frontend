@@ -8,6 +8,7 @@ import * as amplifyAuth from 'aws-amplify/auth'
 
 vi.mock('aws-amplify/auth', () => ({
   associateWebAuthnCredential: vi.fn(),
+  listWebAuthnCredentials: vi.fn(async () => ({ credentials: [] })),
 }))
 
 describe('LobbyScreen', () => {
