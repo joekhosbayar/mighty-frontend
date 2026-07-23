@@ -20,6 +20,8 @@ vi.mock('aws-amplify/auth', () => ({
   confirmResetPassword: vi.fn(),
   setUpTOTP: vi.fn(),
   resendSignUpCode: vi.fn(),
+  associateWebAuthnCredential: vi.fn(),
+  listWebAuthnCredentials: vi.fn(async () => ({ credentials: [] })),
 }))
 
 describe('LoginRoute', () => {

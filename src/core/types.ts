@@ -77,6 +77,10 @@ export interface Game {
   updated_at: string
 }
 
+export type LobbyEvent = 
+  | { type: 'game_created'; game: Game }
+  | { type: 'game_joined'; game_id: string; players_seated: number; max_players: number }
+
 export type ServerMessage =
   | { kind: 'game'; game: Game }
   | { kind: 'error'; error: string }
