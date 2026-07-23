@@ -5,6 +5,8 @@ import type { LobbyEvent } from '../core/types'
 export function useLobbyWebSocket(onEvent: (event: LobbyEvent) => void) {
   const wsRef = useRef<WebSocket | null>(null)
   const isComponentMounted = useRef(true)
+  const onEventRef = useRef(onEvent)
+  onEventRef.current = onEvent
 
   useEffect(() => {
     isComponentMounted.current = true
@@ -20,6 +22,8 @@ export function useLobbyWebSocket(onEvent: (event: LobbyEvent) => void) {
       } catch (e) {
         console.warn('Failed to fetch auth session', e)
       }
+
+      if (!isComponentMounted.current) return
 
       const apiUrl = import.meta.env.VITE_API_URL as string | undefined
       let urlStr = ''
@@ -44,7 +48,7 @@ export function useLobbyWebSocket(onEvent: (event: LobbyEvent) => void) {
         try {
           const msg = JSON.parse(ev.data as string) as Record<string, unknown>
           if (msg.type === 'game_created' || msg.type === 'game_joined') {
-            onEvent(msg as unknown as LobbyEvent)
+            onEventRef.current(msg as unknown as LobbyEvent)
           }
         } catch (e) {
           console.error('Failed to parse lobby message', e)
@@ -69,5 +73,6 @@ export function useLobbyWebSocket(onEvent: (event: LobbyEvent) => void) {
         wsRef.current.close()
       }
     }
-  }, [onEvent])
+  }, [])
 }
+

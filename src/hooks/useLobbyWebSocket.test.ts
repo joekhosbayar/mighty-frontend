@@ -183,4 +183,65 @@ describe('useLobbyWebSocket', () => {
 
     expect(closeSpy).toHaveBeenCalled()
   })
+
+  it('does not instantiate WebSocket if unmounted while fetchAuthSession is pending', async () => {
+    let resolveAuth: (value: any) => void = () => {}
+    vi.mocked(fetchAuthSession).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveAuth = resolve
+        })
+    )
+
+    const onEvent = vi.fn()
+    const { unmount } = renderHook(() => useLobbyWebSocket(onEvent))
+
+    // Unmount before fetchAuthSession resolves
+    unmount()
+
+    // Now resolve fetchAuthSession
+    await act(async () => {
+      resolveAuth({ tokens: { accessToken: { toString: () => 'token' } } })
+      await Promise.resolve()
+    })
+
+    expect(MockWebSocket.instances.length).toBe(0)
+  })
+
+  it('does not reconnect WebSocket when onEvent callback reference changes', async () => {
+    let onEvent = vi.fn()
+    const { rerender } = renderHook(({ cb }) => useLobbyWebSocket(cb), {
+      initialProps: { cb: onEvent },
+    })
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(MockWebSocket.instances.length).toBe(1)
+    const ws = MockWebSocket.instances[0]
+    const closeSpy = vi.spyOn(ws, 'close')
+
+    // Rerender with a new function reference
+    const newOnEvent = vi.fn()
+    rerender({ cb: newOnEvent })
+
+    expect(closeSpy).not.toHaveBeenCalled()
+    expect(MockWebSocket.instances.length).toBe(1)
+
+    // Verify events trigger the new callback
+    act(() => {
+      ws.triggerMessage({
+        type: 'game_created',
+        game: { id: 'g2' },
+      })
+    })
+
+    expect(onEvent).not.toHaveBeenCalled()
+    expect(newOnEvent).toHaveBeenCalledWith({
+      type: 'game_created',
+      game: { id: 'g2' },
+    })
+  })
 })
+
