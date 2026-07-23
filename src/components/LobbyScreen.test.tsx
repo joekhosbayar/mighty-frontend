@@ -1,20 +1,34 @@
 import { render, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { LobbyScreen } from './LobbyScreen'
 import { baseGame, player } from '../core/testing/builders'
 import { getTableName } from '../core/names'
 import * as amplifyAuth from 'aws-amplify/auth'
+import type { LobbyEvent } from '../core/types'
+import { useLobbyWebSocket } from '../hooks/useLobbyWebSocket'
 
 vi.mock('aws-amplify/auth', () => ({
   associateWebAuthnCredential: vi.fn(),
   listWebAuthnCredentials: vi.fn(async () => ({ credentials: [] })),
 }))
 
+let capturedWSHandler: ((event: LobbyEvent) => void) | null = null
+vi.mock('../hooks/useLobbyWebSocket', () => ({
+  useLobbyWebSocket: vi.fn((handler: (event: LobbyEvent) => void) => {
+    capturedWSHandler = handler
+  }),
+}))
+
 describe('LobbyScreen', () => {
   const games = [
     baseGame({ id: 'g1', status: 'waiting', players: [player(0), player(1), null, null, null], created_at: '2026-07-17T22:43:52.453Z' }),
   ]
+
+  beforeEach(() => {
+    capturedWSHandler = null
+    vi.clearAllMocks()
+  })
 
   it('lists waiting games with player counts and joins on click', async () => {
     const onJoin = vi.fn()
@@ -28,7 +42,7 @@ describe('LobbyScreen', () => {
     expect(onJoin).toHaveBeenCalledWith('g1')
   })
 
-  it('refreshes on mount and then every 3 seconds', () => {
+  it('refreshes once on mount and does not set a polling interval', () => {
     vi.useFakeTimers()
     try {
       const onRefresh = vi.fn()
@@ -38,15 +52,55 @@ describe('LobbyScreen', () => {
       )
       expect(onRefresh).toHaveBeenCalledTimes(1)
       act(() => vi.advanceTimersByTime(3000))
-      expect(onRefresh).toHaveBeenCalledTimes(2)
+      expect(onRefresh).toHaveBeenCalledTimes(1)
       act(() => vi.advanceTimersByTime(6000))
-      expect(onRefresh).toHaveBeenCalledTimes(4)
+      expect(onRefresh).toHaveBeenCalledTimes(1)
       unmount()
-      act(() => vi.advanceTimersByTime(9000))
-      expect(onRefresh).toHaveBeenCalledTimes(4)
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('updates games list dynamically when websocket events occur', () => {
+    render(
+      <LobbyScreen games={games} username="alice" onCreate={vi.fn()} onJoin={vi.fn()}
+        onRefresh={vi.fn()} onLogout={vi.fn()} />,
+    )
+
+    expect(useLobbyWebSocket).toHaveBeenCalled()
+    expect(capturedWSHandler).not.toBeNull()
+
+    // 1. game_created event
+    const newGame = baseGame({ id: 'g2', status: 'waiting', players: [player(0), null, null, null, null], created_at: '2026-07-17T22:45:00.000Z' })
+    act(() => {
+      capturedWSHandler!({
+        type: 'game_created',
+        game: newGame,
+      })
+    })
+    expect(screen.getByText(getTableName('g2'))).toBeInTheDocument()
+
+    // 2. game_joined event updates seated count
+    act(() => {
+      capturedWSHandler!({
+        type: 'game_joined',
+        game_id: 'g1',
+        players_seated: 3,
+        max_players: 5,
+      })
+    })
+    expect(screen.getByText(/3\/5 seated/)).toBeInTheDocument()
+
+    // 3. game_joined event when table becomes full (removes table)
+    act(() => {
+      capturedWSHandler!({
+        type: 'game_joined',
+        game_id: 'g1',
+        players_seated: 5,
+        max_players: 5,
+      })
+    })
+    expect(screen.queryByText(getTableName('g1'))).not.toBeInTheDocument()
   })
 
   it('creates a four-player table with chosen fail rule', async () => {
