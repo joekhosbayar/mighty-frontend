@@ -185,7 +185,16 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
                     alignItems: 'center',
                     gap: '4px'
                   }}>
-                    Called: <span style={{ color: suitColor, fontSize: '1rem' }}>{calledSuitObj.label}</span>
+                    Called: <span style={{ 
+                      color: suitColor, 
+                      fontSize: '1.2rem',
+                      background: 'rgba(255, 255, 255, 0.9)',
+                      padding: '0 6px',
+                      borderRadius: '6px',
+                      boxShadow: '0 0 4px rgba(255,255,255,0.5)',
+                      display: 'inline-block',
+                      lineHeight: '1'
+                    }}>{calledSuitObj.label}</span>
                   </div>
                 )}
                 <PhysicalCard card={pc.card} trump={view.trump} />
