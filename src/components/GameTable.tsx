@@ -114,8 +114,15 @@ export function GameTable(props: GameTableProps) {
           <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }} data-testid="game-id">{getTableName(view.gameId)}</span>
           <span className="phase-tag" data-testid="phase">{delayedPhase}</span>
           {view.contract && (
-            <span style={{ color: 'var(--color-accent)' }}>
-              {`Contract ${view.contract.points} ${view.contract.is_no_trump ? 'no-trump' : view.contract.suit}`}
+            <span style={{ color: 'var(--color-accent)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              Contract: {view.contract.points}
+              {view.contract.is_no_trump ? (
+                <span>NT</span>
+              ) : (
+                <div style={{ transform: 'scale(0.35)', transformOrigin: 'top left', width: '21px', height: '30px' }}>
+                  <PhysicalCard card={{ suit: view.contract.suit, rank: ' ' as any }} trump={view.trump} />
+                </div>
+              )}
             </span>
           )}
           {view.isNoFriend ? (
