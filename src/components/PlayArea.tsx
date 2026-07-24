@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import type { Card, Suit, Bid } from '../core/types'
+import type { Card, Suit, Bid, PlayedCard } from '../core/types'
 import type { TableView } from '../core/view'
 import { sameCard } from '../core/cards'
 import { Hand } from './Hand'
@@ -72,7 +72,7 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
     if (currHash !== prevHash && view.previousTrick) {
       const id = Date.now()
       setClearingTrick({ cards: view.previousTrick, id })
-      const timer = setTimeout(() => {
+      setTimeout(() => {
         setClearingTrick(current => current?.id === id ? null : current)
       }, 2500)
     }
