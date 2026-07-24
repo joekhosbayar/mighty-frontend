@@ -49,6 +49,7 @@ export interface TableView {
   trump: Suit
   partnerCard: Card | null
   partnerRevealed: boolean
+  isNoFriend: boolean
   jokerCallCard: Card | null
   jokerLeadCard: Card | null
   scores: ScoreRow[]
@@ -123,6 +124,7 @@ export function tableView(game: Game, myPlayerId: string): TableView {
     trump: game.trump,
     partnerCard: game.partner_card,
     partnerRevealed: game.partner_seat >= 0,
+    isNoFriend: game.is_no_friend ?? false,
     jokerCallCard,
     jokerLeadCard,
     scores: game.players.flatMap(p =>

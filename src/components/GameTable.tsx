@@ -117,6 +117,15 @@ export function GameTable(props: GameTableProps) {
               {`Contract ${view.contract.points} ${view.contract.is_no_trump ? 'no-trump' : view.contract.suit}`}
             </span>
           )}
+          {view.isNoFriend ? (
+            <span style={{ color: 'var(--color-accent)' }}>
+              Friend: None
+            </span>
+          ) : view.partnerCard ? (
+            <span style={{ color: 'var(--color-accent)' }}>
+              Friend: {view.partnerCard.rank === 'Joker' ? 'Joker' : `${view.partnerCard.rank} of ${view.partnerCard.suit}`}
+            </span>
+          ) : null}
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           {showTimer && <TurnTimer updatedAt={view.updatedAt} />}
