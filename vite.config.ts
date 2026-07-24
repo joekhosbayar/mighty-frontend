@@ -19,6 +19,14 @@ const backendProxy = {
       proxy.on('proxyReqWs', proxyReq => proxyReq.removeHeader('origin'))
     },
   },
+  '/lobby': {
+    target: 'http://localhost:8080',
+    changeOrigin: true,
+    ws: true,
+    configure(proxy: { on(ev: string, cb: (proxyReq: { removeHeader(n: string): void }) => void): void }) {
+      proxy.on('proxyReqWs', proxyReq => proxyReq.removeHeader('origin'))
+    },
+  },
 }
 
 export default defineConfig({
