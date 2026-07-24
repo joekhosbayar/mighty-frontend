@@ -38,6 +38,19 @@ export function GameTable(props: GameTableProps) {
   const [toasts, setToasts] = useState<{ id: number, text: string }[]>([])
   const prevBidsLen = useRef(view.bids.length)
 
+  const [delayedPhase, setDelayedPhase] = useState(view.phase)
+
+  useEffect(() => {
+    if (view.phase === 'finished' && delayedPhase === 'playing') {
+      const timer = setTimeout(() => {
+        setDelayedPhase('finished')
+      }, 2500)
+      return () => clearTimeout(timer)
+    } else {
+      setDelayedPhase(view.phase)
+    }
+  }, [view.phase, delayedPhase])
+
   useEffect(() => {
     if (view.bids.length > prevBidsLen.current) {
       const newBids = view.bids.slice(prevBidsLen.current)
@@ -98,7 +111,7 @@ export function GameTable(props: GameTableProps) {
         <div className="table-header-info">
           <span className="phase-title" style={{ margin: 0 }}>Mighty</span>
           <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }} data-testid="game-id">{getTableName(view.gameId)}</span>
-          <span className="phase-tag" data-testid="phase">{view.phase}</span>
+          <span className="phase-tag" data-testid="phase">{delayedPhase}</span>
           {view.contract && (
             <span style={{ color: 'var(--color-accent)' }}>
               {`Contract ${view.contract.points} ${view.contract.is_no_trump ? 'no-trump' : view.contract.suit}`}
@@ -115,7 +128,7 @@ export function GameTable(props: GameTableProps) {
         {connection !== 'open' && <p role="status">Reconnecting…</p>}
         {error && <p role="alert">{error}</p>}
 
-      {view.phase === 'waiting' && (
+      {delayedPhase === 'waiting' && (
         <div className="panel" style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'center' }}>
           <h2 style={{ color: 'var(--color-accent)', marginBottom: '2rem' }}>Waiting for players ({seated}/5)</h2>
           <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -150,13 +163,13 @@ export function GameTable(props: GameTableProps) {
           </ul>
         </div>
       )}
-      {view.phase === 'bidding' && <BidPanel view={view} onBid={props.onBid} onPass={props.onPass} />}
-      {view.phase === 'exchanging' && <ExchangePanel view={view} onDiscard={props.onDiscard} />}
-      {view.phase === 'calling' && <FriendCallPanel view={view} onCallPartner={props.onCallPartner} onNoFriend={props.onNoFriend} />}
-      {view.phase === 'playing' && <PlayArea view={view} onPlayCard={props.onPlayCard} />}
-      {view.phase === 'finished' && <ScoreBoard view={view} onPlayAgain={props.onPlayAgain} onChangeConfig={props.onChangeConfig} />}
+      {delayedPhase === 'bidding' && <BidPanel view={view} onBid={props.onBid} onPass={props.onPass} />}
+      {delayedPhase === 'exchanging' && <ExchangePanel view={view} onDiscard={props.onDiscard} />}
+      {delayedPhase === 'calling' && <FriendCallPanel view={view} onCallPartner={props.onCallPartner} onNoFriend={props.onNoFriend} />}
+      {delayedPhase === 'playing' && <PlayArea view={view} onPlayCard={props.onPlayCard} />}
+      {delayedPhase === 'finished' && <ScoreBoard view={view} onPlayAgain={props.onPlayAgain} onChangeConfig={props.onChangeConfig} />}
 
-      {(view.phase === 'bidding' || view.phase === 'calling') && view.hand.length > 0 && (
+      {(delayedPhase === 'bidding' || delayedPhase === 'calling') && view.hand.length > 0 && (
           <Hand cards={view.hand} mode="play" trump={view.trump} onCard={() => undefined} />
         )}
       </div>

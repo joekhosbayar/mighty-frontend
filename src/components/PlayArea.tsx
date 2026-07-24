@@ -60,6 +60,24 @@ function BidBubble({ playerId, bids, passedPlayers }: { playerId: string, bids: 
 export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
   const [pendingCaller, setPendingCaller] = useState<Card | null>(null)
   const [pendingJoker, setPendingJoker] = useState<Card | null>(null)
+  const [clearingTrick, setClearingTrick] = useState<{ cards: PlayedCard[], id: number } | null>(null)
+  
+  const prevPreviousTrickRef = useRef(view.previousTrick)
+
+  useEffect(() => {
+    // We only care about comparing the cards, not the exact object reference
+    const prevHash = prevPreviousTrickRef.current?.map(c => `${c.seat}-${c.card.rank}-${c.card.suit}`).join(',')
+    const currHash = view.previousTrick?.map(c => `${c.seat}-${c.card.rank}-${c.card.suit}`).join(',')
+    
+    if (currHash !== prevHash && view.previousTrick) {
+      const id = Date.now()
+      setClearingTrick({ cards: view.previousTrick, id })
+      const timer = setTimeout(() => {
+        setClearingTrick(current => current?.id === id ? null : current)
+      }, 2500)
+    }
+    prevPreviousTrickRef.current = view.previousTrick
+  }, [view.previousTrick])
 
   const handleCard = (card: Card) => {
     if (view.jokerLeadCard && sameCard(card, view.jokerLeadCard)) setPendingJoker(card)
@@ -135,8 +153,8 @@ export function PlayArea({ view, onPlayCard }: PlayAreaProps) {
           )
         })}
 
-        <div className="trick-area">
-          {view.currentTrick.map((pc, i) => {
+        <div className={`trick-area ${clearingTrick ? 'trick-clearing' : ''}`}>
+          {(clearingTrick ? clearingTrick.cards : view.currentTrick).map((pc, i) => {
             const isJokerLead = i === 0 && pc.card.rank === 'Joker'
             const calledSuitObj = LEAD_SUITS.find(s => s.suit === view.leadSuit)
             const suitColor = (view.leadSuit === 'hearts' || view.leadSuit === 'diamonds') ? 'var(--color-crimson)' : 'var(--color-ink)'

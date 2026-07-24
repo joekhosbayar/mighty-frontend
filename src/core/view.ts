@@ -40,6 +40,8 @@ export interface TableView {
   seats: SeatView[]
   hand: HandCard[]
   currentTrick: PlayedCard[]
+  previousTrick: PlayedCard[] | null
+  previousTrickWinner: number | null
   leadSuit: Suit | null
   bids: Bid[]
   currentBid: Bid | null
@@ -112,6 +114,8 @@ export function tableView(game: Game, myPlayerId: string): TableView {
     }),
     hand: sorted.map(card => ({ card, playable: playable.has(cardKey(card)) })),
     currentTrick: tricks[tricks.length - 1]?.cards ?? [],
+    previousTrick: tricks.length > 1 ? tricks[tricks.length - 2].cards : null,
+    previousTrickWinner: tricks.length > 1 ? tricks[tricks.length - 2].winner : null,
     leadSuit: tricks[tricks.length - 1]?.lead_suit ?? null,
     bids: game.bids ?? [],
     currentBid: game.current_bid,
