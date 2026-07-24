@@ -11,6 +11,7 @@ import { Hand } from './Hand'
 import { PlayArea } from './PlayArea'
 import { ScoreBoard } from './ScoreBoard'
 import { TurnTimer } from './TurnTimer'
+import { PhysicalCard } from './PhysicalCard'
 
 export interface GameTableProps {
   view: TableView
@@ -118,12 +119,15 @@ export function GameTable(props: GameTableProps) {
             </span>
           )}
           {view.isNoFriend ? (
-            <span style={{ color: 'var(--color-accent)' }}>
+            <span style={{ color: 'var(--color-accent)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               Friend: None
             </span>
           ) : view.partnerCard ? (
-            <span style={{ color: 'var(--color-accent)' }}>
-              Friend: {view.partnerCard.rank === 'Joker' ? 'Joker' : `${view.partnerCard.rank} of ${view.partnerCard.suit}`}
+            <span style={{ color: 'var(--color-accent)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              Friend:
+              <div style={{ transform: 'scale(0.35)', transformOrigin: 'top left', width: '21px', height: '30px' }}>
+                <PhysicalCard card={view.partnerCard} trump={view.trump} />
+              </div>
             </span>
           ) : null}
         </div>
