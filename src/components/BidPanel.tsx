@@ -37,9 +37,13 @@ export function BidPanel({ view, onBid, onPass }: BidPanelProps) {
     <section className="bid-panel panel" style={{ maxWidth: '600px', margin: '0 auto' }}>
       <h2 style={{ fontSize: '1.5rem', color: 'var(--color-accent)' }}>Bidding</h2>
       <ol data-testid="bid-history" style={{ listStyle: 'none', padding: 0, margin: '1rem 0', fontFamily: 'var(--font-mono)' }}>
-        {view.bids.map((b, i) => (
-          <li key={i}>{`${b.player_id}: ${b.points} ${b.is_no_trump ? 'no-trump' : b.suit}`}</li>
-        ))}
+        {view.bids.map((b, i) => {
+          const name = view.seats.find(s => s.playerId === b.player_id)?.name ?? b.player_id;
+          const isPass = b.points === 0;
+          return (
+            <li key={i}>{isPass ? `${name} passed` : `${name}: ${b.points} ${b.is_no_trump ? 'no-trump' : b.suit}`}</li>
+          );
+        })}
       </ol>
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '1rem' }}>
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontFamily: 'var(--font-mono)' }}>
