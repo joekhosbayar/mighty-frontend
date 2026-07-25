@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
-import type { Game, GameConfig } from '../core/types'
+import { useEffect, useState, useCallback } from 'react'
+import type { Game, GameConfig, LobbyEvent } from '../core/types'
 import { getTableName } from '../core/names'
 import { associateWebAuthnCredential, listWebAuthnCredentials } from 'aws-amplify/auth'
+import { useLobbyWebSocket } from '../hooks/useLobbyWebSocket'
 
 export interface LobbyScreenProps {
   games: Game[]
@@ -12,19 +13,52 @@ export interface LobbyScreenProps {
   onLogout(): void
 }
 
-export function LobbyScreen({ games, username, onCreate, onJoin, onRefresh, onLogout }: LobbyScreenProps) {
+export function LobbyScreen({ games: initialGames, username, onCreate, onJoin, onRefresh, onLogout }: LobbyScreenProps) {
   const [numPlayers, setNumPlayers] = useState(5)
   const [failDist, setFailDist] = useState<GameConfig['fail_dist']>('equal_split')
   const [allowJoker, setAllowJoker] = useState(true)
   const [passkeyStatus, setPasskeyStatus] = useState<string | null>(null)
   const [hasPasskey, setHasPasskey] = useState(false)
+
+  const [liveGames, setLiveGames] = useState<Game[]>(initialGames)
+
+  // Sync prop changes (e.g. from initial onRefresh)
+  useEffect(() => {
+    setLiveGames(initialGames)
+  }, [initialGames])
+
+  const handleLobbyEvent = useCallback((event: LobbyEvent) => {
+    setLiveGames((prev) => {
+      if (event.type === 'game_created') {
+        // Prepend new game
+        if (prev.some(g => g.id === event.game.id)) return prev
+        return [event.game, ...prev]
+      } else if (event.type === 'game_joined') {
+        // Update seated count or remove if full
+        if (event.players_seated >= event.max_players) {
+           return prev.filter(g => g.id !== event.game_id)
+        }
+        return prev.map(g => {
+          if (g.id !== event.game_id) return g
+          // Create dummy players array to represent seated count
+          const updatedPlayers = new Array(event.max_players).fill(null)
+          for(let i=0; i<event.players_seated; i++) {
+             updatedPlayers[i] = { id: `dummy-${i}`, name: 'Joined', seat: i, is_connected: true }
+          }
+          return { ...g, players: updatedPlayers }
+        })
+      }
+      return prev
+    })
+  }, [])
+
+  useLobbyWebSocket(handleLobbyEvent)
+
   useEffect(() => {
     onRefresh()
-    const timer = setInterval(onRefresh, 3000)
     listWebAuthnCredentials().then(res => {
       if (res.credentials?.length > 0) setHasPasskey(true)
     }).catch(() => {})
-    return () => clearInterval(timer)
   }, [onRefresh])
 
   return (
@@ -91,13 +125,13 @@ export function LobbyScreen({ games, username, onCreate, onJoin, onRefresh, onLo
         </div>
         </div>
         
-        {games.length === 0 ? (
+        {liveGames.length === 0 ? (
           <div className="panel" style={{ textAlign: 'center', color: 'var(--color-text-secondary)', padding: '3rem 1rem' }}>
             No tables waiting — create one to start playing.
           </div>
         ) : (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {games.map(g => (
+            {liveGames.map(g => (
               <li key={g.id} className="panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: 0 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                   <span style={{ fontFamily: 'var(--font-mono)' }}>{getTableName(g.id)}</span>
