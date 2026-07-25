@@ -4,16 +4,16 @@ import type { LobbyEvent } from '../core/types'
 
 export function useLobbyWebSocket(onEvent: (event: LobbyEvent) => void) {
   const wsRef = useRef<WebSocket | null>(null)
-  const isComponentMounted = useRef(true)
   const onEventRef = useRef(onEvent)
   onEventRef.current = onEvent
 
   useEffect(() => {
-    isComponentMounted.current = true
+    let isActive = true
+    let currentWs: WebSocket | null = null
     let retries = 0
 
     const connect = async () => {
-      if (!isComponentMounted.current) return
+      if (!isActive) return
 
       let token = ''
       try {
@@ -23,7 +23,7 @@ export function useLobbyWebSocket(onEvent: (event: LobbyEvent) => void) {
         console.warn('Failed to fetch auth session', e)
       }
 
-      if (!isComponentMounted.current) return
+      if (!isActive) return
 
       const apiUrl = import.meta.env.VITE_API_URL as string | undefined
       let urlStr = ''
@@ -37,6 +37,7 @@ export function useLobbyWebSocket(onEvent: (event: LobbyEvent) => void) {
       }
 
       const ws = new WebSocket(urlStr)
+      currentWs = ws
       wsRef.current = ws
 
       ws.onopen = () => {
@@ -49,7 +50,7 @@ export function useLobbyWebSocket(onEvent: (event: LobbyEvent) => void) {
           const msg = JSON.parse(ev.data as string) as Record<string, unknown>
           if (msg.type === 'ERROR') {
             console.error('Lobby WS error, stopping reconnects:', msg.error)
-            isComponentMounted.current = false
+            isActive = false
             ws.close()
             return
           }
@@ -62,9 +63,12 @@ export function useLobbyWebSocket(onEvent: (event: LobbyEvent) => void) {
       }
 
       ws.onclose = () => {
-        wsRef.current = null
-        if (isComponentMounted.current) {
-          // If we failed auth, isComponentMounted was set to false, so we won't hit this.
+        if (currentWs === ws) {
+          currentWs = null
+          wsRef.current = null
+        }
+        if (isActive) {
+          // If we failed auth, isActive was set to false, so we won't hit this.
           const delay = Math.min(1000 * 2 ** retries, 10000)
           retries += 1
           setTimeout(connect, delay)
@@ -75,9 +79,9 @@ export function useLobbyWebSocket(onEvent: (event: LobbyEvent) => void) {
     void connect()
 
     return () => {
-      isComponentMounted.current = false
-      if (wsRef.current) {
-        wsRef.current.close()
+      isActive = false
+      if (currentWs) {
+        currentWs.close()
       }
     }
   }, [])
