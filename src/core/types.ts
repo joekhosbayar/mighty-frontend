@@ -32,7 +32,8 @@ export interface Player {
   id: string
   name: string
   seat: number
-  hand?: Card[]
+  hand?: Card[] // present only for the viewer's own seat
+  hand_count: number
   points?: Card[]
   is_connected: boolean
 }
@@ -55,7 +56,6 @@ export interface Game {
   status: Phase
   config?: GameConfig
   players: (Player | null)[]
-  kitty?: Card[]
   current_turn: number
   dealer: number
   bids: Bid[] | null

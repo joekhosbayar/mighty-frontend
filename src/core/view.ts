@@ -107,7 +107,10 @@ export function tableView(game: Game, myPlayerId: string): TableView {
         isDeclarer: i === game.declarer,
         isPartner: i === game.partner_seat,
         isConnected: p?.is_connected ?? false,
-        cardCount: p?.hand?.length ?? 0,
+        // hand_count is authoritative; the hand fallback keeps this correct
+        // against a backend deployed before redaction, so the two deploys are
+        // order-independent.
+        cardCount: p?.hand_count ?? p?.hand?.length ?? 0,
         hasVotedPlayAgain: game.play_again_votes?.[i] ?? false,
         capturedPoints,
         capturedCount,

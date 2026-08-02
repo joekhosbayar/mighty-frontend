@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { tableView } from './view'
 import { baseGame, bid, c, player, trick } from './testing/builders'
+import type { Player } from './types'
 
 describe('tableView', () => {
   it('locates my seat, turn, and declarer flags', () => {
@@ -136,5 +137,35 @@ describe('score rows', () => {
     expect(rows.find(r => r.playerId === 'p0')).toMatchObject({ roundScore: 140, cardPoints: 3 })
     expect(rows.find(r => r.playerId === 'p1')).toMatchObject({ roundScore: 70, cardPoints: 1 })
     expect(rows.find(r => r.playerId === 'p2')).toMatchObject({ roundScore: 0, cardPoints: 0 })
+  })
+})
+
+describe('opponent card counts', () => {
+  it('reads cardCount from hand_count, not from a visible hand', () => {
+    const game = baseGame({
+      players: [
+        player(0, { hand: [c('spades', 'A'), c('hearts', 'K')] }),
+        player(1, { hand_count: 7 }),
+        player(2, { hand_count: 7 }),
+        player(3, { hand_count: 7 }),
+        player(4, { hand_count: 7 }),
+      ],
+    })
+
+    const view = tableView(game, 'p0')
+
+    expect(view.seats[0].cardCount).toBe(2)
+    expect(view.seats[1].cardCount).toBe(7)
+    expect(view.hand).toHaveLength(2)
+  })
+
+  it('falls back to hand length when the server predates hand_count', () => {
+    const legacy = baseGame({
+      players: [player(0, { hand: [c('spades', 'A')] }), player(1), player(2), player(3), player(4)],
+    })
+    // Simulate an old backend: no hand_count anywhere on the wire.
+    for (const p of legacy.players) if (p) delete (p as Partial<Player>).hand_count
+
+    expect(tableView(legacy, 'p0').seats[0].cardCount).toBe(1)
   })
 })
