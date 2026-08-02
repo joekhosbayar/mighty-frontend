@@ -33,7 +33,7 @@ export interface Player {
   name: string
   seat: number
   hand?: Card[] // present only for the viewer's own seat
-  hand_count: number
+  hand_count?: number
   points?: Card[]
   is_connected: boolean
 }

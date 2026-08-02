@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { tableView } from './view'
 import { baseGame, bid, c, player, trick } from './testing/builders'
-import type { Player } from './types'
 
 describe('tableView', () => {
   it('locates my seat, turn, and declarer flags', () => {
@@ -164,7 +163,7 @@ describe('opponent card counts', () => {
       players: [player(0, { hand: [c('spades', 'A')] }), player(1), player(2), player(3), player(4)],
     })
     // Simulate an old backend: no hand_count anywhere on the wire.
-    for (const p of legacy.players) if (p) delete (p as Partial<Player>).hand_count
+    for (const p of legacy.players) if (p) delete p.hand_count
 
     expect(tableView(legacy, 'p0').seats[0].cardCount).toBe(1)
   })
