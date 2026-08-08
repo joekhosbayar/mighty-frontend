@@ -3,7 +3,14 @@ import type { Bid, Card, Game, Player, Suit, Trick } from '../types'
 export const c = (suit: Card['suit'], rank: Card['rank']): Card => ({ suit, rank })
 
 export function player(seat: number, over: Partial<Player> = {}): Player {
-  return { id: `p${seat}`, name: `Player ${seat}`, seat, is_connected: true, ...over }
+  return {
+    id: `p${seat}`,
+    name: `Player ${seat}`,
+    seat,
+    is_connected: true,
+    hand_count: over.hand?.length ?? 0,
+    ...over,
+  }
 }
 
 export function baseGame(over: Partial<Game> = {}): Game {
